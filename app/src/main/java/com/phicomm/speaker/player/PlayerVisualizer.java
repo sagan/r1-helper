@@ -53,7 +53,7 @@ public class PlayerVisualizer {
             if (mScalingMode == 0)
                 f1 = f2 * mLumaGain / 100.0F;
 //            Log.d(TAG, "set-color " + mHue + " " + f1);
-            if( App.enableLed && f1 != 0 ) {
+            if( App.mode == 0 && f1 != 0 ) {
                 float[] color = {mHue, 1.0F, f1};
                 LedLight.setColor(32767L, 0xFFFFFF & Color.HSVToColor(color));
             }
