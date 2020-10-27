@@ -177,7 +177,7 @@ public class BackgroundService extends IntentService {
     }
 
     public void startFrontActivity() {
-        Intent it = new Intent(this, OnePiexlActivity.class);
+        Intent it = new Intent(this, MainActivity.class);
         it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         this.startActivity(it);
     }

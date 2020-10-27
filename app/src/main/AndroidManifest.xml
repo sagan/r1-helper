@@ -38,11 +38,7 @@
                 <action android:name="me.sagan.r1helper.start" />
             </intent-filter>
         </receiver>
-        <activity
-            android:name=".OnePiexlActivity"
-            android:label="@string/title_activity_one_piexl"
-            android:launchMode="singleTop"
-            android:theme="@android:style/Theme.Translucent"></activity>
+
     </application>
 
 </manifest>
