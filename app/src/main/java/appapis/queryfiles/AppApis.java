@@ -3,6 +3,8 @@ package appapis.queryfiles;
 
 import java.io.IOException;
 import java.util.HashMap;
+import me.sagan.r1helper.StreamGobbler;
+import me.sagan.r1helper.Tool;
 
 /**
  *
@@ -37,13 +39,41 @@ public class AppApis {
         try {
             String [] setPermissiveCmd={"su","-c","reboot"};
             Runtime.getRuntime().exec(setPermissiveCmd);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         String json = "{\"error\":0}";
         return json.toString();
     }
 
+    public String run(HashMap qparms){
+        try {
+            String cmd = "su -c ";
+            int exitVal = 0;
+            cmd += qparms.get("cmd").toString();
+            Process proc = Runtime.getRuntime().exec(cmd);
+
+            StreamGobbler errorGobbler = new
+                    StreamGobbler(proc.getErrorStream(), "ERROR");
+            // any output?
+            StreamGobbler outputGobbler = new
+                    StreamGobbler(proc.getInputStream(), "OUTPUT");
+            // kick them off
+            errorGobbler.start();
+            outputGobbler.start();
+            exitVal = proc.waitFor();
+            String json = "{" +
+                    "\"error\":" + exitVal + "," +
+                    "\"stdout\": \"" + Tool.escapeJsonSpecial(outputGobbler.output) + "\"," +
+                    "\"stderr\": \"" + Tool.escapeJsonSpecial(errorGobbler.output) + "\"," +
+                    "\"cmd\": \"" + Tool.escapeJsonSpecial(cmd) + "\"" +
+                    "}";
+            return json.toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "{\"error\":-1}";
+        }
+    }
 
     //implement web callback here and access them using method name
 }
