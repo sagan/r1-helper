@@ -1,11 +1,11 @@
 package me.sagan.r1helper;
 
-import android.support.v7.app.AppCompatActivity;
+import android.app.Activity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
     private final static String TAG = "MainActivity";
     public final static int KEY_MAIN = 275;
 
