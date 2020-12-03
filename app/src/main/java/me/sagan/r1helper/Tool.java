@@ -20,13 +20,6 @@ public class Tool {
         return escaped;
     }
 
-    public static void sleep(int miliseconds) {
-        // 傻逼java连sleep都抛异常
-        try {
-            Thread.sleep(miliseconds);
-        } catch (Exception e1 ) { }
-    }
-
     public static void sendMessage(Context context, String content) {
         Intent intent = new Intent();
         intent.setAction("me.sagan.r1helper.action.MESSAGE");

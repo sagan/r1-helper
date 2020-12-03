@@ -1,18 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.widget.LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="match_parent"
-android:layout_height="match_parent"
-android:paddingLeft="16dp"
-android:paddingRight="16dp"
-android:orientation="horizontal"
-android:gravity="center">
-
-<TextView
-    android:scrollbars = "vertical"
-    android:id="@+id/main_text"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:text="Initiating..."
- />
-
-</android.widget.LinearLayout>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="30"
+        android:orientation="horizontal">
+        <Button
+            android:id="@+id/test"
+            android:text="Test"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".30" />
+        <Button
+            android:id="@+id/clear"
+            android:text="Clear"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".30" />
+    </LinearLayout>
+    <ScrollView
+        android:id="@+id/main"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="70"
+        android:fillViewport="true">
+        <TextView
+            android:scrollbars = "vertical"
+            android:id="@+id/main_text"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:text="Initiating..."
+            />
+    </ScrollView>
+</LinearLayout>

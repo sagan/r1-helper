@@ -3,10 +3,8 @@ package me.sagan.r1helper;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.media.AudioFormat;
 import android.media.AudioManager;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
+import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -39,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ai.kitt.snowboy.SnowboyDetect;
+import ee.ioc.phon.android.speechutils.AudioCue;
 import ee.ioc.phon.android.speechutils.AudioRecorder;
 import ee.ioc.phon.android.speechutils.RawAudioRecorder;
 import okio.BufferedSink;
@@ -48,13 +47,16 @@ public class AlexaService extends IntentService {
     private static final String ACTION_ALEXA = "me.sagan.r1helper.action.ALEXA";
     public static boolean running = false;
 
-    private static boolean shouldDetect;
+    private static boolean enteredIdle = false;
+    private static boolean listening = false; // alexa is listening voice;
+    private static boolean playing = false;
     private static SnowboyDetect snowboyDetect;
 
     private static final int AUDIO_RATE = 16000;
     private RawAudioRecorder recorder;
     private AlexaManager alexaManager;
     private AlexaAudioPlayer audioPlayer;
+    AudioCue audioCue;
     private List<AvsItem> avsQueue = new ArrayList<>();
 
     //Our callback that deals with removing played items in our media player and then checking to see if more items exist
@@ -62,16 +64,20 @@ public class AlexaService extends IntentService {
         @Override
         public void playerPrepared(AvsItem pendingItem) {
             Log.d(TAG, "play_prepared");
+            playing = true;
+            Tool.sendMessage(AlexaService.this, "playing alexa response");
         }
 
         @Override
         public void playerProgress(AvsItem currentItem, long offsetInMilliseconds, float percent) {
-            Log.d(TAG, "play_progress percent " + percent);
+//            Log.d(TAG, "play_progress percent " + percent);
         }
 
         @Override
         public void itemComplete(AvsItem completedItem) {
             Log.d(TAG, "play_item_complete");
+            playing = false;
+            Tool.sendMessage(AlexaService.this, "playing complete");
             avsQueue.remove(completedItem);
             checkQueue();
         }
@@ -105,6 +111,10 @@ public class AlexaService extends IntentService {
         @Override
         public void failure(Exception error) {
             Log.i(TAG, "Voice failure " + error.getMessage());
+            Tool.sendMessage(AlexaService.this, "Voice failure " + error.getMessage());
+            if( listening ) {
+                stopListening();
+            }
         }
 
         @Override
@@ -208,50 +218,33 @@ public class AlexaService extends IntentService {
     }
 
     public void startListening() {
-        if(recorder == null){
-            recorder = new RawAudioRecorder(AUDIO_RATE);
-        }
-        recorder.start();
         Log.d(TAG, "Alexa start listening");
+        Tool.sendMessage(this, "Alexa start listening");
+        listening = true;
+        audioCue.playStartSoundAndSleep();
         alexaManager.sendAudioRequest(requestBody, requestCallback);
     }
 
     //tear down our recorder
     private void stopListening(){
-        if(recorder != null) {
-            Log.d(TAG, "stop listening");
-            recorder.stop();
-            recorder.release();
-            recorder = null;
-        }
+        Log.d(TAG, "stop listening");
+        Tool.sendMessage(this, "Alexa stop listening");
+        listening = false;
+        enteredIdle = true;
+        audioCue.playStopSound();
     }
 
     private DataRequestBody requestBody = new DataRequestBody() {
         @Override
         public void writeTo(BufferedSink sink) throws IOException {
             //while our recorder is not null and it is still recording, keep writing to POST data
-            while (recorder != null && recorder.getState() != AudioRecorder.State.ERROR && !recorder.isPausing()) {
-                if(recorder != null) {
-                    final float rmsdb = recorder.getRmsdb();
-//                    if(recorderView != null) {
-//                        recorderView.post(new Runnable() {
-//                            @Override
-//                            public void run() {
-//                                recorderView.setRmsdbLevel(rmsdb);
-//                            }
-//                        });
-//                    }
-                    if(sink != null && recorder != null) {
-                        sink.write(recorder.consumeRecording());
-                    }
+            while (recorder.getState() != AudioRecorder.State.ERROR && !recorder.isPausing()) {
+                final float rmsdb = recorder.getRmsdb();
+                // update UI rmsdb level
+                if(sink != null && recorder != null) {
+                    sink.write(recorder.consumeRecording());
                 }
-
-                //sleep and do it all over again
-                try {
-                    Thread.sleep(25);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+                SystemClock.sleep(25);
             }
             stopListening();
         }
@@ -314,8 +307,10 @@ public class AlexaService extends IntentService {
     public void onCreate() {
         super.onCreate();
         //get our AlexaManager instance for convenience
+        recorder = new RawAudioRecorder(AUDIO_RATE);
         alexaManager = AlexaManager.getInstance(this, "r1assistant");
         audioPlayer = AlexaAudioPlayer.getInstance(this);
+        audioCue = new AudioCue(this);
         audioPlayer.addCallback(alexaAudioPlayerCallback);
     }
 
@@ -357,49 +352,36 @@ public class AlexaService extends IntentService {
         snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
         snowboyDetect.setSensitivity("0.1"); // 0.48,0.43
         snowboyDetect.applyFrontend(true);
-        Log.d(TAG, "detecting hotword ---");
-        int bufferSize =(int) (16000 * 2 * 0.1); // 0.1 second
-        shouldDetect = true;
-        while( true ) {
-            if( !shouldDetect ) {
-                Tool.sleep(1000);
-                continue;
-            }
-            try {
-                AudioRecord audioRecord = new AudioRecord(
-                        MediaRecorder.AudioSource.DEFAULT,
-                        16000,
-                        AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.ENCODING_PCM_16BIT,
-                        bufferSize
-                );
-                byte[] audioBuffer = new byte[bufferSize];
-                audioRecord.startRecording();
-                Log.d(TAG, "start listening to hotword");
-                Tool.sendMessage(this, "listening hotword");
-                int result = 0;
-                snowboyDetect.reset();
-                while (shouldDetect) {
-                    audioRecord.read(audioBuffer, 0, audioBuffer.length);
-                    short[] shortArray = new short[audioBuffer.length / 2];
-                    ByteBuffer.wrap(audioBuffer).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortArray);
+        recorder.start();
 
-                    result = snowboyDetect.runDetection(shortArray, shortArray.length);
-//                    Log.d(TAG, "detect result " + result);
-                    if (result > 0) {
-                        break;
+        listening = false;
+        playing = false;
+        enteredIdle = true;
+        snowboyDetect.reset();
+        SystemClock.sleep(3000);
+        while( true ) {
+            try {
+                int result = 0;
+                if( !listening ) {
+                    if( enteredIdle ) {
+                        enteredIdle = false;
+                        Log.d(TAG, "detecting");
+                        Tool.sendMessage(this, "detecting");
                     }
+                    byte[] recordButes = recorder.consumeRecordingAndTruncate();
+                    short[] shortArray = new short[recordButes.length / 2];
+                    ByteBuffer.wrap(recordButes).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(shortArray);
+                    result = snowboyDetect.runDetection(shortArray, shortArray.length);
                 }
-                audioRecord.stop();
-                audioRecord.release();
                 if (result > 0) {
-                    Log.d(TAG,"hotword detected " + result);
+                    Log.d(TAG, "hotword detected");
                     Tool.sendMessage(this, "hotword detected");
-                    shouldDetect = false;
+                    snowboyDetect.reset();
                     startListening();
                 }
+                SystemClock.sleep(50);
             } catch(Exception e) {
-                Tool.sleep(5000);
+                SystemClock.sleep(5000);
                 Log.d(TAG, "error" +  e.getMessage());
                 Tool.sendMessage(this, "Error " + e.getMessage());
                 e.printStackTrace();

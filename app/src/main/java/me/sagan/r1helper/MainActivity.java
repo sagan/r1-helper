@@ -8,6 +8,10 @@ import android.content.IntentFilter;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.MotionEvent;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.text.DateFormat;
@@ -16,9 +20,12 @@ import java.util.Date;
 public class MainActivity extends Activity {
     private final static String TAG = "MainActivity";
     public final static int KEY_MAIN = 275;
-    private MessageReceiver receiver;
+    private MessageReceiver receiver = null;
+    boolean receiverRegistered = false;
     private boolean shortPress = false;
     private TextView mainText;
+    Button testButton,clearButton;
+    ScrollView main;
     DateFormat dateFormat;
 
     @Override
@@ -26,20 +33,50 @@ public class MainActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         dateFormat = DateFormat.getDateTimeInstance();
-        receiver = new MessageReceiver();
-        registerReceiver(receiver, new IntentFilter("me.sagan.r1helper.action.MESSAGE"));
+        main = (ScrollView) findViewById(R.id.main);
         mainText = (TextView) findViewById(R.id.main_text);
+        testButton = (Button) findViewById(R.id.test);
+        clearButton = (Button) findViewById(R.id.clear);
+        testButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                appendMessage("Test----\n\n\n");
+            }
+        });
+        clearButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                mainText.setText("");
+            }
+        });
     }
 
     @Override
     public void onStop() {
         super.onStop();
-        unregisterReceiver(receiver);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if (receiverRegistered) {
+            unregisterReceiver(receiver);
+            receiver = null;
+            receiverRegistered = false;
+            Log.d("AlexaService", "onPause unregister receiver");
+        }
     }
 
     @Override
     protected void onResume() {
         super.onResume();
+        if (!receiverRegistered) {
+            if(receiver == null ) {
+                receiver = new MessageReceiver();
+            }
+            Log.d("AlexaService", "onResume register receiver");
+            registerReceiver(receiver, new IntentFilter("me.sagan.r1helper.action.MESSAGE"));
+            receiverRegistered = true;
+        }
+
         if( !BackgroundService.running ) {
             BackgroundService.startActionMain(this,"","");
         }
@@ -93,8 +130,18 @@ public class MainActivity extends Activity {
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals("me.sagan.r1helper.action.MESSAGE")) {
                 String content = intent.getStringExtra("content");
-                mainText.append("\n" + dateFormat.format(new Date()) + ": " + content + "\n");
+                appendMessage(content);
             }
         }
+    }
+
+    void appendMessage(String content) {
+        mainText.append("\n" + dateFormat.format(new Date()) + ": " + content + "\n");
+        main.post(new Runnable() {
+            @Override
+            public void run() {
+                main.fullScroll(View.FOCUS_DOWN);
+            }
+        });
     }
 }

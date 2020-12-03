@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.Context;
 import android.content.IntentFilter;
 import android.graphics.Color;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.phicomm.speaker.player.PlayerVisualizer;
@@ -124,15 +125,12 @@ public class BackgroundService extends IntentService {
         }
         int tick = 0;
         while( true ) {
-            try {
-                this.handleLight(tick);
-                Thread.sleep(500);
-                tick++;
-                if( tick % 600 == 0 ) {
-                    startFrontActivity();
-                    tick = 0;
-                }
-            } catch(Exception e) {
+            this.handleLight(tick);
+            SystemClock.sleep(500);
+            tick++;
+            if( tick % 600 == 0 ) {
+                startFrontActivity();
+                tick = 0;
             }
         }
     }
