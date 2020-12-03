@@ -125,46 +125,7 @@ public class BackgroundService extends IntentService {
         int tick = 0;
         while( true ) {
             try {
-                if( App.mode == 2 ) {
-                    if( btCnt == 0) {
-                        btCnt = 120;
-                        setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE);
-                    } else if( btCnt == 1 ) {
-                        btCnt = 0;
-                        App.mode = 0;
-                        setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE);
-                    } else {
-                        btCnt--;
-                    }
-                    LedLight.setColor(32767L, tick % 2 == 0 ? 0x0000FF : 0xffffff);
-                } else {
-                    if( btCnt > 0 ) {
-                        setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE);
-                        btCnt = 0;
-                    }
-                    if( App.mode == 0 ) {
-                        if(tick % 2 == 0 && !App.playing ) {
-                            Calendar now = Calendar.getInstance();
-                            int seconds = now.get(Calendar.HOUR_OF_DAY) * 3600 + now.get(Calendar.MINUTE) * 60 + now.get(Calendar.SECOND);
-                            float brightness = 0F;
-                            if( seconds >= 25200 && seconds <= 75600 ) { // 7:00 - 21:00
-                                brightness = 0.7F;
-                            } else if ( seconds <= 10800 ) { // 3:00
-                                brightness = 0.3F;
-                            } else if( seconds < 25200 ) {
-                                brightness = 0.3F + (seconds-10800) * 0.4F / (25200-10800);
-                            } else {
-                                brightness = 0.7F -  (seconds - 75600) * 0.4F / (86400 - 75600);
-                            }
-                            float[] color = {seconds * 360 / 86400F, 1.0F, brightness};
-                            LedLight.setColor(32767L, 0xFFFFFF & Color.HSVToColor(color));
-                        }
-                    }  else if( App.mode == 1) {
-                        if( tick % 2 == 0 ) {
-                            LedLight.setColor(32767L, 0);
-                        }
-                    }
-                }
+                this.handleLight(tick);
                 Thread.sleep(500);
                 tick++;
                 if( tick % 600 == 0 ) {
@@ -192,6 +153,48 @@ public class BackgroundService extends IntentService {
         super.onDestroy();
     }
 
+    private void handleLight(int tick) {
+        if( App.mode == 2 ) {
+            if( btCnt == 0) {
+                btCnt = 120;
+                setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE_DISCOVERABLE);
+            } else if( btCnt == 1 ) {
+                btCnt = 0;
+                App.mode = 0;
+                setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE);
+            } else {
+                btCnt--;
+            }
+            LedLight.setColor(32767L, tick % 2 == 0 ? 0x0000FF : 0xffffff);
+        } else {
+            if( btCnt > 0 ) {
+                setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE);
+                btCnt = 0;
+            }
+            if( App.mode == 0 ) {
+                if(tick % 2 == 0 && !App.playing ) {
+                    Calendar now = Calendar.getInstance();
+                    int seconds = now.get(Calendar.HOUR_OF_DAY) * 3600 + now.get(Calendar.MINUTE) * 60 + now.get(Calendar.SECOND);
+                    float brightness = 0F;
+                    if( seconds >= 25200 && seconds <= 75600 ) { // 7:00 - 21:00
+                        brightness = 0.7F;
+                    } else if ( seconds <= 10800 ) { // 3:00
+                        brightness = 0.3F;
+                    } else if( seconds < 25200 ) {
+                        brightness = 0.3F + (seconds-10800) * 0.4F / (25200-10800);
+                    } else {
+                        brightness = 0.7F -  (seconds - 75600) * 0.4F / (86400 - 75600);
+                    }
+                    float[] color = {seconds * 360 / 86400F, 1.0F, brightness};
+                    LedLight.setColor(32767L, 0xFFFFFF & Color.HSVToColor(color));
+                }
+            }  else if( App.mode == 1) {
+                if( tick % 2 == 0 ) {
+                    LedLight.setColor(32767L, 0);
+                }
+            }
+        }
+    }
     // 20: disabled; 23 discoverable; 21 connectable;
     private boolean setBluetoothScanMode(int scanMode){
         Log.d(TAG, "set bluetooth scan mode " + scanMode);

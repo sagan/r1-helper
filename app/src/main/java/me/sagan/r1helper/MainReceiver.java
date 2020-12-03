@@ -8,5 +8,6 @@ public class MainReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
         BackgroundService.startActionMain(context,"","");
+        AlexaService.startAlexa(context);
     }
 }
