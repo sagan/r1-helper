@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import ai.kitt.snowboy.SnowboyDetect;
@@ -47,8 +48,10 @@ public class AlexaService extends IntentService {
     private static final String ACTION_ALEXA = "me.sagan.r1helper.action.ALEXA";
     public static boolean running = false;
 
+    int isLogin = 0;
     private static boolean enteredIdle = false;
     private static boolean listening = false; // alexa is listening voice;
+    long listeningStartTime = 0;
     private static boolean playing = false;
     private static SnowboyDetect snowboyDetect;
 
@@ -221,6 +224,7 @@ public class AlexaService extends IntentService {
         Log.d(TAG, "Alexa start listening");
         Tool.sendMessage(this, "Alexa start listening");
         listening = true;
+        listeningStartTime = (new Date()).getTime();
         audioCue.playStartSoundAndSleep();
         alexaManager.sendAudioRequest(requestBody, requestCallback);
     }
@@ -238,7 +242,9 @@ public class AlexaService extends IntentService {
         @Override
         public void writeTo(BufferedSink sink) throws IOException {
             //while our recorder is not null and it is still recording, keep writing to POST data
-            while (recorder.getState() != AudioRecorder.State.ERROR && !recorder.isPausing()) {
+            while (recorder.getState() != AudioRecorder.State.ERROR &&
+                    (!recorder.isPausing() ||  ( (new Date()).getTime() - listeningStartTime < 3000 ) )
+                    ) {
                 final float rmsdb = recorder.getRmsdb();
                 // update UI rmsdb level
                 if(sink != null && recorder != null) {
@@ -352,21 +358,40 @@ public class AlexaService extends IntentService {
         snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
         snowboyDetect.setSensitivity("0.1"); // 0.48,0.43
         snowboyDetect.applyFrontend(true);
-        recorder.start();
+        SystemClock.sleep(2000);
+
+        alexaManager.checkLoggedIn(new  AsyncCallback<Boolean, Throwable>() {
+            @Override
+            public void start() {
+
+            }
+            @Override
+            public void success(Boolean result) {
+                isLogin = result ? 2 : 1;
+                sendMessage("checkLogin result " + result);
+            }
+            @Override
+            public void failure(Throwable error) {
+                sendMessage("checkLogin failure " + error.getMessage());
+            }
+            @Override
+            public void complete() {
+
+            }
+        });
 
         listening = false;
         playing = false;
         enteredIdle = true;
         snowboyDetect.reset();
-        SystemClock.sleep(3000);
+        recorder.start();
         while( true ) {
             try {
                 int result = 0;
                 if( !listening ) {
                     if( enteredIdle ) {
                         enteredIdle = false;
-                        Log.d(TAG, "detecting");
-                        Tool.sendMessage(this, "detecting");
+                        sendMessage("detecting");
                     }
                     byte[] recordButes = recorder.consumeRecordingAndTruncate();
                     short[] shortArray = new short[recordButes.length / 2];
@@ -374,18 +399,25 @@ public class AlexaService extends IntentService {
                     result = snowboyDetect.runDetection(shortArray, shortArray.length);
                 }
                 if (result > 0) {
-                    Log.d(TAG, "hotword detected");
-                    Tool.sendMessage(this, "hotword detected");
+                    sendMessage("hotword detected");
                     snowboyDetect.reset();
-                    startListening();
+                    if( isLogin == 2 ) {
+                        startListening();
+                    } else {
+                        sendMessage("Please login to use alexa");
+                    }
                 }
                 SystemClock.sleep(50);
             } catch(Exception e) {
                 SystemClock.sleep(5000);
-                Log.d(TAG, "error" +  e.getMessage());
-                Tool.sendMessage(this, "Error " + e.getMessage());
+                sendMessage("error" +  e.getMessage());
                 e.printStackTrace();
             }
         }
+    }
+
+    void sendMessage(String content) {
+        Log.d(TAG, content);
+        Tool.sendMessage(this, content);
     }
 }
