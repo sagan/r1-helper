@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
     boolean receiverRegistered = false;
     private boolean shortPress = false;
     private TextView mainText;
-    Button testButton,clearButton;
+    Button testButton,clearButton,loginButton;
     ScrollView main;
     DateFormat dateFormat;
 
@@ -37,14 +37,20 @@ public class MainActivity extends Activity {
         mainText = (TextView) findViewById(R.id.main_text);
         testButton = (Button) findViewById(R.id.test);
         clearButton = (Button) findViewById(R.id.clear);
+        loginButton = (Button) findViewById(R.id.login);
         testButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                appendMessage("Test----\n\n\n");
+                AlexaService.trigger();
             }
         });
         clearButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 mainText.setText("");
+            }
+        });
+        loginButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AlexaService.login();
             }
         });
     }

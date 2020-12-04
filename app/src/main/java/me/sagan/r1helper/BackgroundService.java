@@ -152,6 +152,9 @@ public class BackgroundService extends IntentService {
     }
 
     private void handleLight(int tick) {
+        if( AlexaService.listening ) {
+            return;
+        }
         if( App.mode == 2 ) {
             if( btCnt == 0) {
                 btCnt = 120;

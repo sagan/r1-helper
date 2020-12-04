@@ -8,9 +8,11 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 
+import com.phicomm.speaker.player.light.LedLight;
 import com.willblaschko.android.alexa.AlexaManager;
 import com.willblaschko.android.alexa.audioplayer.AlexaAudioPlayer;
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
+import com.willblaschko.android.alexa.callbacks.AuthorizationCallback;
 import com.willblaschko.android.alexa.interfaces.AvsItem;
 import com.willblaschko.android.alexa.interfaces.AvsResponse;
 import com.willblaschko.android.alexa.interfaces.audioplayer.AvsPlayContentItem;
@@ -46,22 +48,47 @@ import okio.BufferedSink;
 public class AlexaService extends IntentService {
     private static final String TAG = "AlexaService";
     private static final String ACTION_ALEXA = "me.sagan.r1helper.action.ALEXA";
+
     public static boolean running = false;
+    public int isLogin = 0;
+    public static boolean enteredIdle = false;
+    public static boolean listening = false; // alexa is listening voice;
+    public long listeningStartTime = 0;
+    public static boolean playing = false;
 
-    int isLogin = 0;
-    private static boolean enteredIdle = false;
-    private static boolean listening = false; // alexa is listening voice;
-    long listeningStartTime = 0;
-    private static boolean playing = false;
     private static SnowboyDetect snowboyDetect;
-
     private static final int AUDIO_RATE = 16000;
     private RawAudioRecorder recorder;
     private AlexaManager alexaManager;
     private AlexaAudioPlayer audioPlayer;
     AudioCue audioCue;
     private List<AvsItem> avsQueue = new ArrayList<>();
+    private static AlexaService instance;
 
+    public static void trigger() {
+        if( instance != null ) {
+            instance.startListening();
+        }
+    }
+
+    public static void login() {
+        if( instance != null ) {
+            instance.alexaManager.logIn(new AuthorizationCallback() {
+                @Override
+                public void onCancel() {
+
+                }
+                @Override
+                public void onSuccess() {
+                    instance.sendMessage("login success");
+                }
+                @Override
+                public void onError(Exception error) {
+                    instance.sendMessage("login error " + error.getMessage());
+                }
+            });
+        }
+    }
     //Our callback that deals with removing played items in our media player and then checking to see if more items exist
     private AlexaAudioPlayer.Callback alexaAudioPlayerCallback = new AlexaAudioPlayer.Callback() {
         @Override
@@ -115,9 +142,9 @@ public class AlexaService extends IntentService {
         public void failure(Exception error) {
             Log.i(TAG, "Voice failure " + error.getMessage());
             Tool.sendMessage(AlexaService.this, "Voice failure " + error.getMessage());
-            if( listening ) {
-                stopListening();
-            }
+//            if( listening ) {
+//                stopListening();
+//            }
         }
 
         @Override
@@ -224,8 +251,10 @@ public class AlexaService extends IntentService {
         Log.d(TAG, "Alexa start listening");
         Tool.sendMessage(this, "Alexa start listening");
         listening = true;
-        listeningStartTime = (new Date()).getTime();
+        LedLight.setColor(32767L, 0xFFFFFF );
         audioCue.playStartSoundAndSleep();
+        recorder.consumeRecordingAndTruncate();
+        listeningStartTime = (new Date()).getTime();
         alexaManager.sendAudioRequest(requestBody, requestCallback);
     }
 
@@ -234,17 +263,39 @@ public class AlexaService extends IntentService {
         Log.d(TAG, "stop listening");
         Tool.sendMessage(this, "Alexa stop listening");
         listening = false;
+        LedLight.setColor(32767L, 0 );
         enteredIdle = true;
         audioCue.playStopSound();
+        restartRecorder();
     }
 
+    private void restartRecorder() {
+        if( recorder != null ) {
+            Log.d(TAG, "restart recorder");
+            recorder.stop();
+            recorder.release();
+            recorder = new RawAudioRecorder(AUDIO_RATE);
+            recorder.start();
+        }
+    }
     private DataRequestBody requestBody = new DataRequestBody() {
         @Override
         public void writeTo(BufferedSink sink) throws IOException {
             //while our recorder is not null and it is still recording, keep writing to POST data
-            while (recorder.getState() != AudioRecorder.State.ERROR &&
-                    (!recorder.isPausing() ||  ( (new Date()).getTime() - listeningStartTime < 3000 ) )
-                    ) {
+            while (true) {
+                long passedTime =  (new Date()).getTime() - listeningStartTime;
+                if( recorder.getState() == AudioRecorder.State.ERROR ) {
+                    Log.d(TAG, "recorder error");
+                    break;
+                }
+                if( passedTime > 10000 ) {
+                    Log.d(TAG, "passed 10 seconds");
+                    break;
+                }
+                if( recorder.isPausing() ) {
+                    Log.d(TAG, "recorder isPausing");
+                    break;
+                }
                 final float rmsdb = recorder.getRmsdb();
                 // update UI rmsdb level
                 if(sink != null && recorder != null) {
@@ -318,6 +369,7 @@ public class AlexaService extends IntentService {
         audioPlayer = AlexaAudioPlayer.getInstance(this);
         audioCue = new AudioCue(this);
         audioPlayer.addCallback(alexaAudioPlayerCallback);
+        instance = this;
     }
 
     public static void startAlexa(Context context) {
@@ -345,6 +397,7 @@ public class AlexaService extends IntentService {
         Intent intent = new Intent("me.sagan.r1helper.start");
 //        sendBroadcast(intent);
         snowboyDetect.delete();
+        instance = null;
         super.onDestroy();
     }
 
@@ -400,7 +453,6 @@ public class AlexaService extends IntentService {
                 }
                 if (result > 0) {
                     sendMessage("hotword detected");
-                    snowboyDetect.reset();
                     if( isLogin == 2 ) {
                         startListening();
                     } else {
