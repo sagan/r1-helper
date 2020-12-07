@@ -65,6 +65,11 @@ public class AlexaService extends IntentService {
     private List<AvsItem> avsQueue = new ArrayList<>();
     private static AlexaService instance;
 
+    public static void reset() {
+        if( instance != null ) {
+            instance.restartRecorder();
+        }
+    }
     public static void trigger() {
         if( instance != null ) {
             instance.startListening();
@@ -142,9 +147,9 @@ public class AlexaService extends IntentService {
         public void failure(Exception error) {
             Log.i(TAG, "Voice failure " + error.getMessage());
             Tool.sendMessage(AlexaService.this, "Voice failure " + error.getMessage());
-//            if( listening ) {
-//                stopListening();
-//            }
+            if( listening ) {
+                stopListening();
+            }
         }
 
         @Override
@@ -265,13 +270,15 @@ public class AlexaService extends IntentService {
         listening = false;
         LedLight.setColor(32767L, 0 );
         enteredIdle = true;
+        alexaManager.cancelAudioRequest();
+        alexaManager.closeOpenDownchannel();
         audioCue.playStopSound();
         restartRecorder();
     }
 
     private void restartRecorder() {
         if( recorder != null ) {
-            Log.d(TAG, "restart recorder");
+            Tool.sendMessage(this,"restart recorder");
             recorder.stop();
             recorder.release();
             recorder = new RawAudioRecorder(AUDIO_RATE);
@@ -284,6 +291,7 @@ public class AlexaService extends IntentService {
             //while our recorder is not null and it is still recording, keep writing to POST data
             while (true) {
                 long passedTime =  (new Date()).getTime() - listeningStartTime;
+//                Log.d(TAG, " passed Time " + passedTime);
                 if( recorder.getState() == AudioRecorder.State.ERROR ) {
                     Log.d(TAG, "recorder error");
                     break;

@@ -15,6 +15,12 @@
             android:layout_height="wrap_content"
             android:layout_weight=".30" />
         <Button
+            android:id="@+id/reset"
+            android:text="Reset"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".30" />
+        <Button
             android:id="@+id/clear"
             android:text="Clear"
             android:layout_width="0dp"
