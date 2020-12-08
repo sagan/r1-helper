@@ -30,6 +30,9 @@ import com.willblaschko.android.alexa.interfaces.speaker.AvsSetVolumeItem;
 import com.willblaschko.android.alexa.interfaces.speechrecognizer.AvsExpectSpeechItem;
 import com.willblaschko.android.alexa.interfaces.speechsynthesizer.AvsSpeakItem;
 import com.willblaschko.android.alexa.requestbody.DataRequestBody;
+import com.willblaschko.android.alexa.service.DownChannelService;
+
+//import com.willblaschko.android.alexa.service.*
 
 import java.io.File;
 import java.io.IOException;
@@ -67,6 +70,8 @@ public class AlexaService extends IntentService {
 
     public static void reset() {
         if( instance != null ) {
+            instance.alexaManager.cancelAudioRequest();
+            instance.stopListening();
             instance.restartRecorder();
         }
     }
@@ -145,8 +150,7 @@ public class AlexaService extends IntentService {
 
         @Override
         public void failure(Exception error) {
-            Log.i(TAG, "Voice failure " + error.getMessage());
-            Tool.sendMessage(AlexaService.this, "Voice failure " + error.getMessage());
+            sendMessage( "Voice failure " + error.getMessage());
             if( listening ) {
                 stopListening();
             }
@@ -192,6 +196,7 @@ public class AlexaService extends IntentService {
 
         //if we're out of things, hang up the phone and move on
         if (avsQueue.size() == 0) {
+            Log.d(TAG, "queue empty");
             return;
         }
 
@@ -226,6 +231,7 @@ public class AlexaService extends IntentService {
         } else if (current instanceof AvsExpectSpeechItem) {
             //listen for user input
             audioPlayer.stop();
+            avsQueue.clear();
             startListening();
         } else if (current instanceof AvsSetVolumeItem) {
             setVolume(((AvsSetVolumeItem) current).getVolume());
@@ -253,45 +259,44 @@ public class AlexaService extends IntentService {
     }
 
     public void startListening() {
-        Log.d(TAG, "Alexa start listening");
-        Tool.sendMessage(this, "Alexa start listening");
+        sendMessage("Alexa start listening");
         listening = true;
         LedLight.setColor(32767L, 0xFFFFFF );
         audioCue.playStartSoundAndSleep();
         recorder.consumeRecordingAndTruncate();
         listeningStartTime = (new Date()).getTime();
+
+        Intent stickyIntent = new Intent(this, DownChannelService.class);
+        startService(stickyIntent);
+        Log.i(TAG, "Started down channel service.");
+
         alexaManager.sendAudioRequest(requestBody, requestCallback);
     }
 
     //tear down our recorder
     private void stopListening(){
-        Log.d(TAG, "stop listening");
-        Tool.sendMessage(this, "Alexa stop listening");
+        sendMessage("stop listening " + avsQueue.size());
         listening = false;
         LedLight.setColor(32767L, 0 );
         enteredIdle = true;
-        alexaManager.cancelAudioRequest();
-        alexaManager.closeOpenDownchannel();
         audioCue.playStopSound();
         restartRecorder();
     }
 
     private void restartRecorder() {
         if( recorder != null ) {
-            Tool.sendMessage(this,"restart recorder");
+            sendMessage("restart recorder");
             recorder.stop();
             recorder.release();
-            recorder = new RawAudioRecorder(AUDIO_RATE);
-            recorder.start();
         }
+        recorder = new RawAudioRecorder(AUDIO_RATE);
+        recorder.start();
     }
     private DataRequestBody requestBody = new DataRequestBody() {
         @Override
         public void writeTo(BufferedSink sink) throws IOException {
-            //while our recorder is not null and it is still recording, keep writing to POST data
             while (true) {
                 long passedTime =  (new Date()).getTime() - listeningStartTime;
-//                Log.d(TAG, " passed Time " + passedTime);
                 if( recorder.getState() == AudioRecorder.State.ERROR ) {
                     Log.d(TAG, "recorder error");
                     break;
@@ -300,11 +305,12 @@ public class AlexaService extends IntentService {
                     Log.d(TAG, "passed 10 seconds");
                     break;
                 }
-                if( recorder.isPausing() ) {
+                if( recorder.isPausing() && passedTime > 2000 ) {
                     Log.d(TAG, "recorder isPausing");
                     break;
                 }
                 final float rmsdb = recorder.getRmsdb();
+//                Log.d(TAG, " passed Time " + passedTime + " ; rmsdb " + rmsdb);
                 // update UI rmsdb level
                 if(sink != null && recorder != null) {
                     sink.write(recorder.consumeRecording());

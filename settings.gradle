@@ -1,2 +1,3 @@
 include ':app'
 include ':lib:speechutils'
+include ':lib:AlexaAndroid'
