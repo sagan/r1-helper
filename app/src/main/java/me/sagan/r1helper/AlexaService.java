@@ -379,7 +379,7 @@ public class AlexaService extends IntentService {
         super.onCreate();
         //get our AlexaManager instance for convenience
         recorder = new RawAudioRecorder(AUDIO_RATE);
-        alexaManager = AlexaManager.getInstance(this, "r1assistant");
+        alexaManager = AlexaManager.getInstance(this);
         audioPlayer = AlexaAudioPlayer.getInstance(this);
         audioCue = new AudioCue(this);
         audioPlayer.addCallback(alexaAudioPlayerCallback);
