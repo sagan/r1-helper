@@ -7,5 +7,7 @@
 /.idea/workspace.xml
 .DS_Store
 /build
+/lib/speechutils/build
+/lib/AlexaAndroid/build
 /captures
 .externalNativeBuild
