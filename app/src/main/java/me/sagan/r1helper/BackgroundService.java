@@ -102,9 +102,9 @@ public class BackgroundService extends IntentService {
     private void handleActionStartup(String param1, String param2) {
         if( !App.permissiive ) {
             try {
-                String [] setPermissiveCmd={"su","-c","setenforce", "0"};
-                Runtime.getRuntime().exec(setPermissiveCmd);
-                App.permissiive = true;
+//                String [] setPermissiveCmd={"su","-c","setenforce", "0"};
+//                Runtime.getRuntime().exec(setPermissiveCmd);
+//                App.permissiive = true;
             } catch (Exception e ) {
                 Log.w(TAG, "Failed to setenforce 0 (no root?)");
             }
@@ -187,11 +187,11 @@ public class BackgroundService extends IntentService {
                         brightness = 0.7F -  (seconds - 75600) * 0.4F / (86400 - 75600);
                     }
                     float[] color = {seconds * 360 / 86400F, 1.0F, brightness};
-                    LedLight.setColor(32767L, 0xFFFFFF & Color.HSVToColor(color));
+                    Tool.setLight(Color.HSVToColor(color));
                 }
             }  else if( App.mode == 1) {
                 if( tick % 2 == 0 ) {
-                    LedLight.setColor(32767L, 0);
+                    Tool.setLight(0);
                 }
             }
         }

@@ -3,16 +3,12 @@ package com.phicomm.speaker.player.light;
 import android.util.Log;
 
 public class LedLight {
-    private static int mColor = 0;
     private static final String TAG = "LedLight";
     public static boolean loaded = false;
 
     public static void setColor(long paramLong, int paramInt) {
         if( loaded ) {
-            if (mColor != paramInt) {
-                set_color(paramLong, paramInt);
-                mColor = paramInt;
-            }
+            set_color(paramLong, paramInt);
         }
     }
 

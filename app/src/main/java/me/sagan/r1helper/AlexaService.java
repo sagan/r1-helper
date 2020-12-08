@@ -261,7 +261,7 @@ public class AlexaService extends IntentService {
     public void startListening() {
         sendMessage("Alexa start listening");
         listening = true;
-        LedLight.setColor(32767L, 0xFFFFFF );
+        Tool.setLight(0xFFFFFF);
         audioCue.playStartSoundAndSleep();
         recorder.consumeRecordingAndTruncate();
         listeningStartTime = (new Date()).getTime();
@@ -277,7 +277,7 @@ public class AlexaService extends IntentService {
     private void stopListening(){
         sendMessage("stop listening " + avsQueue.size());
         listening = false;
-        LedLight.setColor(32767L, 0 );
+        Tool.setLight(0);
         enteredIdle = true;
         audioCue.playStopSound();
         restartRecorder();
