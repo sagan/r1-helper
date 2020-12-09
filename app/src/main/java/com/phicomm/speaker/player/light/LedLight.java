@@ -6,6 +6,10 @@ public class LedLight {
     private static final String TAG = "LedLight";
     public static boolean loaded = false;
 
+    public static void setColor(int paramInt) {
+        setColor(32767L, paramInt);
+    }
+
     public static void setColor(long paramLong, int paramInt) {
         if( loaded ) {
             set_color(paramLong, paramInt);

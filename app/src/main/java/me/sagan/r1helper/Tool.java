@@ -4,19 +4,21 @@ import android.content.Context;
 import android.content.Intent;
 import android.util.Log;
 
+import com.phicomm.speaker.player.light.LedLight;
+
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
 public class Tool {
     private static final String TAG = "Tool";
     private static int currentColor = 0;
-    private static OutputStream lightFile;
 
-    static {
-        try {
-            lightFile = new FileOutputStream("/sys/class/leds/multi_leds0/led_color");
-        } catch(Exception e) {}
-    }
+//    private static OutputStream lightFile;
+//    static {
+//        try {
+//            lightFile = new FileOutputStream("/sys/class/leds/multi_leds0/led_color");
+//        } catch(Exception e) {}
+//    }
 
     public static  String escapeJsonSpecial(String raw) {
         String escaped = raw;
@@ -39,12 +41,14 @@ public class Tool {
     }
 
     public static void setLight(int color) {
-        try {
-            // LedLight.setColor(32767L, color);
-            if( lightFile != null && currentColor != color  ) {
-                lightFile.write(String.format("%04x %06x", 32767L, 0xFFFFFF & color).getBytes());
-                currentColor = color;
-            }
-        } catch(Exception e) {}
+        if( currentColor != color  ) {
+//            try {
+//                if( lightFile != null  ) {
+//                    lightFile.write(String.format("%04x %06x", 32767L, 0xFFFFFF & color).getBytes());
+//                }
+//            } catch(Exception e) {}
+            LedLight.setColor(color);
+            currentColor = color;
+        }
     }
 }
