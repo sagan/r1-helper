@@ -41,6 +41,7 @@ public class Tool {
     }
 
     public static void setLight(int color) {
+        color = 0xFFFFFF & color;
         if( currentColor != color  ) {
 //            try {
 //                if( lightFile != null  ) {

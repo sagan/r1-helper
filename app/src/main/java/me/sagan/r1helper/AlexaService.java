@@ -8,7 +8,6 @@ import android.os.SystemClock;
 import android.util.Log;
 import android.view.KeyEvent;
 
-import com.phicomm.speaker.player.light.LedLight;
 import com.willblaschko.android.alexa.AlexaManager;
 import com.willblaschko.android.alexa.audioplayer.AlexaAudioPlayer;
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;

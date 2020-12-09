@@ -4,9 +4,9 @@ import android.content.Context;
 import android.graphics.Color;
 import android.media.audiofx.Visualizer;
 import android.util.Log;
-import com.phicomm.speaker.player.light.LedLight;
 
 import me.sagan.r1helper.App;
+import me.sagan.r1helper.Tool;
 
 public class PlayerVisualizer {
     private static final float CHROMA_INCRE_STEP = 0.001F;
@@ -55,7 +55,7 @@ public class PlayerVisualizer {
 //            Log.d(TAG, "set-color " + mHue + " " + f1);
             if( App.mode == 0 && f1 != 0 ) {
                 float[] color = {mHue, 1.0F, f1};
-                LedLight.setColor(32767L, 0xFFFFFF & Color.HSVToColor(color));
+                Tool.setLight(Color.HSVToColor(color));
             }
             App.playing = f1 != 0;
         }
@@ -97,7 +97,7 @@ public class PlayerVisualizer {
                 this.mVisualizer = null;
             }
             this.mVisualizerEnable = false;
-            LedLight.setColor(32767L, 0);
+            Tool.setLight(0);
             App.playing = false;
             Log.v(TAG, "disable");
         }

@@ -9,16 +9,10 @@ import android.content.IntentFilter;
 import android.graphics.Color;
 import android.os.SystemClock;
 import android.util.Log;
-
 import com.phicomm.speaker.player.PlayerVisualizer;
-import com.phicomm.speaker.player.light.LedLight;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.time.LocalDateTime;
 import java.util.Calendar;
-import java.util.Date;
-
 import androidhttpweb.TinyWebServer;
 
 /**
@@ -166,7 +160,7 @@ public class BackgroundService extends IntentService {
             } else {
                 btCnt--;
             }
-            LedLight.setColor(32767L, tick % 2 == 0 ? 0x0000FF : 0xffffff);
+            Tool.setLight(tick % 2 == 0 ? 0x0000FF : 0xffffff);
         } else {
             if( btCnt > 0 ) {
                 setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE);
