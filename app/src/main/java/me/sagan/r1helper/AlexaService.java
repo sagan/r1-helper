@@ -69,6 +69,7 @@ public class AlexaService extends IntentService {
 
     public static void reset() {
         if( instance != null ) {
+            instance.checkLogin();
             instance.alexaManager.cancelAudioRequest();
             instance.stopListening();
             instance.restartRecorder();
@@ -414,22 +415,10 @@ public class AlexaService extends IntentService {
         super.onDestroy();
     }
 
-    private void go() {
-        SnowboyUtils.copyAssets(this);
-        File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
-        File model = new File(snowboyDirectory, "alexa.umdl");
-        File common = new File(snowboyDirectory, "common.res");
-
-        // TODO: Set Sensitivity
-        snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
-        snowboyDetect.setSensitivity("0.1"); // 0.48,0.43
-        snowboyDetect.applyFrontend(true);
-        SystemClock.sleep(2000);
-
+    private void checkLogin() {
         alexaManager.checkLoggedIn(new  AsyncCallback<Boolean, Throwable>() {
             @Override
             public void start() {
-
             }
             @Override
             public void success(Boolean result) {
@@ -445,6 +434,20 @@ public class AlexaService extends IntentService {
 
             }
         });
+    }
+
+    private void go() {
+        SnowboyUtils.copyAssets(this);
+        File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
+        File model = new File(snowboyDirectory, "alexa.umdl");
+        File common = new File(snowboyDirectory, "common.res");
+
+        // TODO: Set Sensitivity
+        snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
+        snowboyDetect.setSensitivity("0.1"); // 0.48,0.43
+        snowboyDetect.applyFrontend(true);
+        SystemClock.sleep(2000);
+        checkLogin();
 
         listening = false;
         playing = false;
