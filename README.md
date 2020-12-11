@@ -2,7 +2,7 @@
 
 # R1Helper / R1 助手
 
-适用于斐讯 R1 音箱的 Amazon Alexa 语音助手 app。基于 [AlexaAndroid](https://github.com/willblaschko/AlexaAndroid) 这个框架开发。语音唤醒("Alexa")使用的是 [Snowboy](https://snowboy.kitt.ai/)。
+适用于斐讯 R1 音箱的 Amazon Alexa 语音助手 app。基于 [AlexaAndroid](https://github.com/willblaschko/AlexaAndroid) 这个框架开发。语音唤醒("Alexa")使用的是 [Snowboy](https://snowboy.kitt.ai/)。目前只支持英语。
 
 Target SDK level: 22 (Android 5.1) (ARMv7)
 
@@ -81,7 +81,11 @@ adb shell am start -n me.sagan.r1helper/.MainActivity
 
 目前支持用英语与 Alexa 对话。
 
-### 蓝牙配对・ LED 灯
+### 配置 Alexa 语音助手
+
+在PC上打开 [Amazon alexa home](https://alexa.amazon.com/) 或在手机上安装 Amazon alexa app，用你的 amazon 账号登录，在 Settings 页面找到 "R1-assistant" 设备，里面可以配置设备的地理位置、时区等。
+
+### 蓝牙配对・LED 灯
 
 本 App 自带控制 R1 蓝牙模式控制、LED 灯控制功能。  开机时自动打开蓝牙。但控制 LED 灯需要 root 权限。
 
@@ -94,3 +98,11 @@ adb shell am start -n me.sagan.r1helper/.MainActivity
 * 蓝牙配对模式：此模式下允许配对新的蓝牙设备。LED 灯交替闪烁蓝、白色。
 
 如果没有 root，那么任何模式下 LED 灯都不会亮。
+
+补充说明：
+
+R1 控制 LED 灯方式本质上是向 /sys/class/leds/multi_leds0/led_color 这个设备文件写入11字节的数据。例如：
+
+adb shell "echo -n '7fff ffffff' > /sys/class/leds/multi_leds0/led_color"
+
+其中 ffffff 是 RGB 颜色数值（ 000000 为 关闭 LED 灯）。但由于 selinux 限制，第三方 app 无法访问这个设备文件，除非获得 root 权限后关闭 selinux。
