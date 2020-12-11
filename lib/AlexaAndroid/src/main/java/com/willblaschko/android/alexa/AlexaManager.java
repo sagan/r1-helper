@@ -28,6 +28,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Response;
@@ -59,6 +61,19 @@ public class AlexaManager {
     private String urlEndpoint;
     private Context mContext;
     private boolean mIsRecording = false;
+    public Event.EventWrapper activeRecognizeEvent;
+    public Event playbackStateEvent;
+
+    public void finishedPlayback() {
+        playbackStateEvent = null;
+    }
+    public void  updatePlaybackStateEvent(AvsItem item, String playerActivity) {
+        Event.Builder builder = new Event.Builder();
+        playbackStateEvent = builder.setHeaderNamespace("AudioPlayer")
+                .setHeaderName("PlaybackState").setPayloadToken(item.getToken())
+                .setPayloadPlayerActivity(playerActivity)
+                .setPlayloadOffsetInMilliseconds(0).build().getEvent();
+    }
 
     private AlexaManager(Context context, String productId){
         mContext = context.getApplicationContext();
@@ -347,7 +362,11 @@ public class AlexaManager {
                                 @Override
                                 protected AvsResponse doInBackground(Void... params) {
                                     try {
-                                        getSpeechSendAudio().sendAudio(url, token, requestBody, new AsyncEventHandler(AlexaManager.this, callback));
+                                        List<Event> context = new ArrayList<>();
+                                        if( playbackStateEvent != null ) {
+                                            context.add(playbackStateEvent);
+                                        }
+                                        activeRecognizeEvent = getSpeechSendAudio().sendAudio(url, token, context, requestBody, new AsyncEventHandler(AlexaManager.this, callback));
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                         //bubble up the error

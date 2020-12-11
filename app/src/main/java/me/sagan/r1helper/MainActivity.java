@@ -88,13 +88,8 @@ public class MainActivity extends Activity {
             registerReceiver(receiver, new IntentFilter("me.sagan.r1helper.action.MESSAGE"));
             receiverRegistered = true;
         }
-
-        if( !BackgroundService.running ) {
-            BackgroundService.startActionMain(this,"","");
-        }
-        if( !AlexaService.running ) {
-            AlexaService.startAlexa(this);
-        }
+        Intent intent = new Intent("me.sagan.r1helper.start");
+        sendBroadcast(intent);
     }
     @Override
     public boolean onKeyLongPress(int keyCode, KeyEvent event) {
@@ -149,8 +144,8 @@ public class MainActivity extends Activity {
 
     void appendMessage(String content) {
         CharSequence text = mainText.getText();
-        if( text.length() > 100000 ) {
-            mainText.setText( text.subSequence(50000, text.length()) );
+        if( text.length() > 10000 ) {
+            mainText.setText( text.subSequence(5000, text.length()) );
         }
         mainText.append("\n" + dateFormat.format(new Date()) + ": " + content + "\n");
         main.post(new Runnable() {

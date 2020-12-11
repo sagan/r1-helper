@@ -10,8 +10,10 @@ import android.view.KeyEvent;
 
 import com.willblaschko.android.alexa.AlexaManager;
 import com.willblaschko.android.alexa.audioplayer.AlexaAudioPlayer;
+import com.willblaschko.android.alexa.audioplayer.PlaybackAudioPlayer;
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
 import com.willblaschko.android.alexa.callbacks.AuthorizationCallback;
+import com.willblaschko.android.alexa.data.Event;
 import com.willblaschko.android.alexa.interfaces.AvsItem;
 import com.willblaschko.android.alexa.interfaces.AvsResponse;
 import com.willblaschko.android.alexa.interfaces.audioplayer.AvsPlayContentItem;
@@ -63,6 +65,7 @@ public class AlexaService extends IntentService {
     private RawAudioRecorder recorder;
     private AlexaManager alexaManager;
     private AlexaAudioPlayer audioPlayer;
+    private PlaybackAudioPlayer playbackAudioPlayer;
     AudioCue audioCue;
     private List<AvsItem> avsQueue = new ArrayList<>();
     private static AlexaService instance;
@@ -103,9 +106,8 @@ public class AlexaService extends IntentService {
     private AlexaAudioPlayer.Callback alexaAudioPlayerCallback = new AlexaAudioPlayer.Callback() {
         @Override
         public void playerPrepared(AvsItem pendingItem) {
-            Log.d(TAG, "play_prepared");
             playing = true;
-            Tool.sendMessage(AlexaService.this, "playing alexa response");
+            Tool.sendMessage(AlexaService.this, "play response");
         }
 
         @Override
@@ -115,22 +117,60 @@ public class AlexaService extends IntentService {
 
         @Override
         public void itemComplete(AvsItem completedItem) {
-            Log.d(TAG, "play_item_complete");
             playing = false;
-            Tool.sendMessage(AlexaService.this, "playing complete");
+            Tool.sendMessage(AlexaService.this, "play response complete");
             avsQueue.remove(completedItem);
+            audioPlayer.stop();
             checkQueue();
         }
 
         @Override
         public boolean playerError(AvsItem item, int what, int extra) {
-            Log.d(TAG, "play_error " + what + "," + extra);
+            Log.d(TAG, "play_error " +  ( item != null  ? item.getToken() : "null") );
+            avsQueue.remove(item);
+            audioPlayer.stop();
             return false;
         }
 
         @Override
         public void dataError(AvsItem item, Exception e) {
             Log.d(TAG, "play_data_error " + e.getMessage());
+        }
+    };
+
+    private PlaybackAudioPlayer.Callback playbackAudioPlayerCallback = new PlaybackAudioPlayer.Callback() {
+        @Override
+        public void playerPrepared(AvsItem pendingItem) {
+            playing = true;
+            Tool.sendMessage(AlexaService.this, "play content");
+        }
+
+        @Override
+        public void playerProgress(AvsItem currentItem, long offsetInMilliseconds, float percent) {
+//            Log.d(TAG, "play_progress percent " + percent);
+        }
+
+        @Override
+        public void itemComplete(AvsItem completedItem) {
+            playing = false;
+            Tool.sendMessage(AlexaService.this, "play content complete");
+            avsQueue.remove(completedItem);
+            alexaManager.finishedPlayback();
+            playbackAudioPlayer.stop();
+            checkQueue();
+        }
+
+        @Override
+        public boolean playerError(AvsItem item, int what, int extra) {
+            Log.d(TAG, "playback_error " + ( item != null  ? item.getToken() : "null") );
+            avsQueue.remove(item);
+            playbackAudioPlayer.stop();
+            return false;
+        }
+
+        @Override
+        public void dataError(AvsItem item, Exception e) {
+            Log.d(TAG, "playback_data_error " + e.getMessage());
         }
     };
 
@@ -197,6 +237,7 @@ public class AlexaService extends IntentService {
         //if we're out of things, hang up the phone and move on
         if (avsQueue.size() == 0) {
             Log.d(TAG, "queue empty");
+            playbackAudioPlayer.play();
             return;
         }
 
@@ -206,32 +247,59 @@ public class AlexaService extends IntentService {
 
         if (current instanceof AvsPlayRemoteItem) {
             //play a URL
-            if (!audioPlayer.isPlaying()) {
-                audioPlayer.playItem((AvsPlayRemoteItem) current);
+            audioPlayer.stop();
+            alexaManager.updatePlaybackStateEvent(current, "PLAYING");
+            if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current ) {
+                AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
+                if( currentItem != null ) {
+                    avsQueue.remove(currentItem);
+                }
+                playbackAudioPlayer.playItem((AvsPlayRemoteItem) current);
+            } else {
+                playbackAudioPlayer.play();
             }
         } else if (current instanceof AvsPlayContentItem) {
             //play a URL
-            if (!audioPlayer.isPlaying()) {
-                audioPlayer.playItem((AvsPlayContentItem) current);
+            audioPlayer.stop();
+            alexaManager.updatePlaybackStateEvent(current, "PLAYING");
+            if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current) {
+                AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
+                if( currentItem != null ) {
+                    avsQueue.remove(currentItem);
+                }
+                playbackAudioPlayer.playItem((AvsPlayContentItem) current);
+            } else {
+                playbackAudioPlayer.play();
             }
         } else if (current instanceof AvsSpeakItem) {
             //play a sound file
-            if (!audioPlayer.isPlaying()) {
+            playbackAudioPlayer.pause();
+            if (!audioPlayer.isPlaying() || audioPlayer.getCurrentItem() != current) {
+                AvsItem currentItem = audioPlayer.getCurrentItem();
+                if( currentItem != null ) {
+                    avsQueue.remove(currentItem);
+                }
                 audioPlayer.playItem((AvsSpeakItem) current);
+            } else {
+                audioPlayer.play();
             }
         } else if (current instanceof AvsStopItem) {
             //stop our play
             audioPlayer.stop();
+            playbackAudioPlayer.stop();
             avsQueue.remove(current);
         } else if (current instanceof AvsReplaceAllItem) {
             audioPlayer.stop();
+            playbackAudioPlayer.stop();
             avsQueue.remove(current);
         } else if (current instanceof AvsReplaceEnqueuedItem) {
             avsQueue.remove(current);
         } else if (current instanceof AvsExpectSpeechItem) {
             //listen for user input
             audioPlayer.stop();
-            avsQueue.clear();
+            playbackAudioPlayer.pause();
+            avsQueue.remove(current);
+//            avsQueue.clear();
             startListening();
         } else if (current instanceof AvsSetVolumeItem) {
             setVolume(((AvsSetVolumeItem) current).getVolume());
@@ -268,8 +336,10 @@ public class AlexaService extends IntentService {
 
         Intent stickyIntent = new Intent(this, DownChannelService.class);
         startService(stickyIntent);
-        Log.i(TAG, "Started down channel service.");
+        Log.i(TAG, "Start down channel service.");
 
+        audioPlayer.stop();
+        playbackAudioPlayer.pause();
         alexaManager.sendAudioRequest(requestBody, requestCallback);
     }
 
@@ -380,9 +450,11 @@ public class AlexaService extends IntentService {
         //get our AlexaManager instance for convenience
         recorder = new RawAudioRecorder(AUDIO_RATE);
         alexaManager = AlexaManager.getInstance(this);
-        audioPlayer = AlexaAudioPlayer.getInstance(this);
         audioCue = new AudioCue(this);
+        audioPlayer = AlexaAudioPlayer.getInstance(this);
+        playbackAudioPlayer = PlaybackAudioPlayer.getInstance(this);
         audioPlayer.addCallback(alexaAudioPlayerCallback);
+        playbackAudioPlayer.addCallback(playbackAudioPlayerCallback);
         instance = this;
     }
 
@@ -405,14 +477,14 @@ public class AlexaService extends IntentService {
     }
 
     public void onDestroy() {
-        stopForeground(true);
-        Log.d(TAG, "onDestroy");
         running = false;
-        Intent intent = new Intent("me.sagan.r1helper.start");
-//        sendBroadcast(intent);
+        Log.d(TAG, "onDestroy");
+        stopForeground(true);
         snowboyDetect.delete();
         instance = null;
         super.onDestroy();
+        Intent intent = new Intent("me.sagan.r1helper.start");
+        sendBroadcast(intent);
     }
 
     private void checkLogin() {
@@ -488,4 +560,5 @@ public class AlexaService extends IntentService {
         Log.d(TAG, content);
         Tool.sendMessage(this, content);
     }
+
 }

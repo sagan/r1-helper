@@ -2,11 +2,13 @@ package com.willblaschko.android.alexa.interfaces;
 
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
 import com.willblaschko.android.alexa.connection.ClientUtil;
+import com.willblaschko.android.alexa.data.Event;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.MediaType;
@@ -38,7 +40,7 @@ public abstract class SendEvent {
      * @param url the URL we're posting to, this is either the default {@link com.willblaschko.android.alexa.data.Directive} or {@link com.willblaschko.android.alexa.data.Event} URL
      * @param accessToken the access token of the user who has given consent to the app
      */
-    protected void prepareConnection(String url, String accessToken) {
+    protected Event.EventWrapper prepareConnection(String url, String accessToken, List<Event> context) {
 
         //set the request URL
         mRequestBuilder.url(url);
@@ -46,14 +48,17 @@ public abstract class SendEvent {
         //set our authentication access token header
         mRequestBuilder.addHeader("Authorization", "Bearer " + accessToken);
 
-        String event = getEvent();
+        Event.EventWrapper event = getEventWrapper(context);
 
         mBodyBuilder = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
-                .addFormDataPart("metadata", "metadata", RequestBody.create(MediaType.parse("application/json; charset=UTF-8"), event));
+                .addFormDataPart("metadata", "metadata", RequestBody.create(MediaType.parse("application/json; charset=UTF-8"),
+                        event != null ? event.toJson() : getEvent()));
 
         //reset our output stream
         mOutputStream = new ByteArrayOutputStream();
+
+        return event;
     }
 
     /**
@@ -107,5 +112,7 @@ public abstract class SendEvent {
      */
     @NotNull
     protected abstract String getEvent();
+
+    protected abstract Event.EventWrapper getEventWrapper(List<Event> context);
 
 }

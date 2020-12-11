@@ -6,12 +6,14 @@ import android.util.Log;
 
 import com.willblaschko.android.alexa.VoiceHelper;
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
+import com.willblaschko.android.alexa.data.Event;
 import com.willblaschko.android.alexa.interfaces.AvsException;
 import com.willblaschko.android.alexa.requestbody.DataRequestBody;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
 
 import okhttp3.Call;
 import okhttp3.RequestBody;
@@ -55,7 +57,7 @@ public class SpeechSendText extends SpeechSendEvent {
 
 
         //call the parent class's prepareConnection() in order to prepare our URL POST
-        prepareConnection(url, accessToken);
+        prepareConnection(url, accessToken, new ArrayList<Event>());
 
         //get our VoiceHelper and use an async callback to get the data and send it off to the AVS server via completePost()
         VoiceHelper voiceHelper = VoiceHelper.getInstance(context);

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import static com.willblaschko.android.alexa.utility.Util.getUuid;
 
@@ -84,6 +85,7 @@ public class Event {
         String token;
         String profile;
         String format;
+        String playerActivity;
         Boolean muted;
         Long volume;
         Long offsetInMilliseconds;
@@ -179,6 +181,11 @@ public class Event {
             return this;
         }
 
+        public Builder setPayloadPlayerActivity(String playerActivity){
+            payload.playerActivity = playerActivity;
+            return this;
+        }
+
         public Builder setPayloadMuted(boolean muted){
             payload.muted = muted;
             return this;
@@ -207,6 +214,18 @@ public class Event {
                 .setPayloadFormat("AUDIO_L16_RATE_16000_CHANNELS_1")
                 .setPayloadProfile("NEAR_FIELD");
         return builder.toJson();
+    }
+
+    public static EventWrapper getSpeechRecognizerEventWrapper(List<Event> context){
+        Builder builder = new Builder();
+        builder.setHeaderNamespace("SpeechRecognizer")
+                .setHeaderName("Recognize")
+                .setHeaderMessageId(getUuid())
+                .setHeaderDialogRequestId(UUID.randomUUID().toString())
+                .setContext(context)
+                .setPayloadFormat("AUDIO_L16_RATE_16000_CHANNELS_1")
+                .setPayloadProfile("NEAR_FIELD");
+        return builder.build();
     }
 
     public static String getVolumeChangedEvent(long volume, boolean isMute){

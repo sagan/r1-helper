@@ -5,6 +5,8 @@ import com.willblaschko.android.alexa.interfaces.SendEvent;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 import okhttp3.MultipartBody;
 import okhttp3.RequestBody;
 
@@ -20,6 +22,12 @@ public abstract class SpeechSendEvent extends SendEvent {
     @Override
     protected String getEvent() {
         return Event.getSpeechRecognizerEvent();
+    }
+
+    @NotNull
+    @Override
+    protected Event.EventWrapper getEventWrapper(List<Event> context) {
+        return Event.getSpeechRecognizerEventWrapper(context);
     }
 
     @Override

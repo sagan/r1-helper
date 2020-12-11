@@ -1,5 +1,5 @@
-package com.willblaschko.android.alexa.audioplayer;
 
+package com.willblaschko.android.alexa.audioplayer;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
@@ -26,12 +26,11 @@ import java.util.List;
  * A class that abstracts the Android MediaPlayer and adds additional functionality to handle AvsItems
  * as well as properly handle multiple callbacks--be care not to leak Activities by not removing the callback
  */
-public class AlexaAudioPlayer {
+public class PlaybackAudioPlayer {
 
     public static final String TAG = "AlexaAudioPlayer";
 
-    private static AlexaAudioPlayer mInstance;
-
+    private static PlaybackAudioPlayer mInstance;
     private MediaPlayer mMediaPlayer;
     private Context mContext;
     private AvsItem mItem;
@@ -41,8 +40,8 @@ public class AlexaAudioPlayer {
      * Create our new AlexaAudioPlayer
      * @param context any context, we will get the application level to store locally
      */
-    private AlexaAudioPlayer(Context context){
-       mContext = context.getApplicationContext();
+    private PlaybackAudioPlayer(Context context){
+        mContext = context.getApplicationContext();
     }
 
     /**
@@ -51,13 +50,14 @@ public class AlexaAudioPlayer {
      * @param context any context, we will get the application level to store locally
      * @return our instance of the AlexaAudioPlayer
      */
-    public static AlexaAudioPlayer getInstance(Context context){
+    public static PlaybackAudioPlayer getInstance(Context context){
         if(mInstance == null){
-            mInstance = new AlexaAudioPlayer(context);
+            mInstance = new PlaybackAudioPlayer(context);
             trimCache(context);
         }
         return mInstance;
     }
+
 
     private static void trimCache(Context context) {
         try {

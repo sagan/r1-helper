@@ -3,10 +3,13 @@ package com.willblaschko.android.alexa.interfaces;
 import android.util.Log;
 
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
+import com.willblaschko.android.alexa.data.Event;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 
@@ -27,7 +30,7 @@ public class GenericSendEvent extends SendEvent{
             callback.start();
         }
         try {
-            prepareConnection(url, accessToken);
+            prepareConnection(url, accessToken, new ArrayList<Event>());
             if (callback != null) {
                 callback.success(completePost());
                 callback.complete();
@@ -45,6 +48,12 @@ public class GenericSendEvent extends SendEvent{
     @Override
     public String getEvent() {
         return event;
+    }
+
+    @NotNull
+    @Override
+    public Event.EventWrapper getEventWrapper(List<Event> context) {
+       return null;
     }
 
 

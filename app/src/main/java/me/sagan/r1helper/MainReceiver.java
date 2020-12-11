@@ -7,7 +7,11 @@ import android.content.Intent;
 public class MainReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
-        BackgroundService.startActionMain(context,"","");
-        AlexaService.startAlexa(context);
+        if( !BackgroundService.running ) {
+            BackgroundService.startActionMain(context,"","");
+        }
+        if( !AlexaService.running ) {
+            AlexaService.startAlexa(context);
+        }
     }
 }

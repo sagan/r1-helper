@@ -21,20 +21,15 @@ import androidhttpweb.TinyWebServer;
  */
 public class BackgroundService extends IntentService {
     private static final String TAG = "BackgroundService";
-
     // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
     private static final String ACTION_MAIN = "me.sagan.r1helper.action.STARTUP";
-
     // TODO: Rename parameters
     private static final String EXTRA_PARAM1 = "me.sagan.r1helper.extra.PARAM1";
     private static final String EXTRA_PARAM2 = "me.sagan.r1helper.extra.PARAM2";
-
     public static boolean running = false;
-
     private  static int btCnt = 0;
-
+    public static BackgroundService instance;
     private PlayerVisualizer mPlayerVisualizer;
-
     private BluetoothAdapter adapter;
 
 //    private BroadcastReceiver bluetoothChangeReceiver = new BluetoothChangeReceiver();
@@ -55,6 +50,7 @@ public class BackgroundService extends IntentService {
         this.mPlayerVisualizer = new PlayerVisualizer(0, this);
         this.mPlayerVisualizer.enable();
         this.adapter = BluetoothAdapter.getDefaultAdapter();
+        instance = this;
         try {
             TinyWebServer.startServer("0.0.0.0",9000, getDir("web", Context.MODE_PRIVATE).toString() );
         } catch( Exception e ) {
@@ -95,6 +91,7 @@ public class BackgroundService extends IntentService {
      */
     private void handleActionStartup(String param1, String param2) {
         if( !App.permissiive ) {
+            SystemClock.sleep(5000); // wait for magisk manager to be ready when first boot
             try {
                 String [] setPermissiveCmd={"su","-c","setenforce", "0"};
                 Runtime.getRuntime().exec(setPermissiveCmd);
@@ -123,7 +120,7 @@ public class BackgroundService extends IntentService {
             SystemClock.sleep(500);
             tick++;
             if( tick % 600 == 0 ) {
-                startFrontActivity();
+//                startFrontActivity();
                 tick = 0;
             }
         }
@@ -137,12 +134,13 @@ public class BackgroundService extends IntentService {
 
     @Override
     public void onDestroy() {
-        stopForeground(true);
+        super.onDestroy();
         running = false;
+        stopForeground(true);
+        TinyWebServer.stopServer();
+        instance = null;
         Intent intent = new Intent("me.sagan.r1helper.start");
         sendBroadcast(intent);
-        TinyWebServer.stopServer();
-        super.onDestroy();
     }
 
     private void handleLight(int tick) {

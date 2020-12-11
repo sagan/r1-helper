@@ -7,6 +7,7 @@ import android.os.AsyncTask;
 import android.util.Log;
 
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
+import com.willblaschko.android.alexa.data.Event;
 import com.willblaschko.android.alexa.interfaces.AvsException;
 import com.willblaschko.android.alexa.requestbody.DataRequestBody;
 
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 import okhttp3.Call;
 import okhttp3.RequestBody;
@@ -72,7 +74,7 @@ public class SpeechSendVoice extends SpeechSendEvent {
             @Override
             protected Void doInBackground(Void... params) {
                 synchronized(mLock) {
-                    prepareConnection(url, accessToken);
+                    prepareConnection(url, accessToken, new ArrayList<Event>());
                 }
                 return null;
             }

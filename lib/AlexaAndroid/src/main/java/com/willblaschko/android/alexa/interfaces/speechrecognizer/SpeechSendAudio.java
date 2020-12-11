@@ -3,12 +3,14 @@ package com.willblaschko.android.alexa.interfaces.speechrecognizer;
 import android.util.Log;
 
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
+import com.willblaschko.android.alexa.data.Event;
 import com.willblaschko.android.alexa.interfaces.AvsException;
 import com.willblaschko.android.alexa.requestbody.DataRequestBody;
 
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.RequestBody;
@@ -35,8 +37,8 @@ public class SpeechSendAudio extends SpeechSendEvent {
      * @param callback our event callbacks
      * @throws IOException
      */
-    public void sendAudio(final String url, final String accessToken, @NotNull DataRequestBody requestBody,
-                          final AsyncCallback<Call, Exception> callback) throws IOException {
+    public Event.EventWrapper sendAudio(final String url, final String accessToken, List<Event> context, @NotNull DataRequestBody requestBody,
+                                        final AsyncCallback<Call, Exception> callback) throws IOException {
         this.requestBody = requestBody;
         if(callback != null){
             callback.start();
@@ -46,7 +48,7 @@ public class SpeechSendAudio extends SpeechSendEvent {
 
         //call the parent class's prepareConnection() in order to prepare our URL POST
         try {
-            prepareConnection(url, accessToken);
+            Event.EventWrapper event = prepareConnection(url, accessToken, context);
             final Call response = completePost();
 
             if (callback != null) {
@@ -58,8 +60,10 @@ public class SpeechSendAudio extends SpeechSendEvent {
 
             Log.i(TAG, "Audio sent");
             Log.i(TAG, "Audio sending process took: " + (System.currentTimeMillis() - start));
+            return event;
         } catch (IOException|AvsException e) {
             onError(callback, e);
+            return null;
         }
     }
 
