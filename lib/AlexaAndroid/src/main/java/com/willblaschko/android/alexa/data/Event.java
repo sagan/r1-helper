@@ -393,6 +393,27 @@ public class Event {
         return builder.toJson();
     }
 
+    // https://developer.amazon.com/en-US/docs/alexa/alexa-voice-service/settings.html#settingsupdated
+    // lang: ja-JP, en-US
+    public static String getSettingsUpdatedEvent(String lang) {
+        return "{" +
+                "    \"event\": {" +
+                "        \"header\": {" +
+                "            \"namespace\": \"Settings\"," +
+                "            \"name\": \"SettingsUpdated\"," +
+                "            \"messageId\": \"" + getUuid() + "\"" +
+                "        }," +
+                "        \"payload\": {" +
+                "            \"settings\": [" +
+                "                {" +
+                "                    \"key\": \"locale\"," +
+                "                    \"value\": \"" + lang + "\"" +
+                "                }" +
+                "            ]" +
+                "        }" +
+                "    }" +
+                "}\n";
+    }
 
 }
 

@@ -2,7 +2,7 @@
 
 # R1Helper / R1 助手
 
-适用于斐讯 R1 音箱的 Amazon Alexa 语音助手 app。基于 [AlexaAndroid](https://github.com/willblaschko/AlexaAndroid) 这个框架开发。语音唤醒("Alexa")使用的是 [Snowboy](https://snowboy.kitt.ai/)。目前只支持英语。
+适用于斐讯 R1 音箱的 Amazon Alexa 语音助手 app。基于 [AlexaAndroid](https://github.com/willblaschko/AlexaAndroid) 这个框架开发。语音唤醒("Alexa")使用的是 [Snowboy](https://snowboy.kitt.ai/)。
 
 Target SDK level: 22 (Android 5.1) (ARMv7)
 
@@ -79,7 +79,10 @@ adb shell am force-stop me.sagan.r1helper
 adb shell am start -n me.sagan.r1helper/.MainActivity
 ```
 
-目前支持用英语与 Alexa 对话。
+默认用英语与 Alexa 对话。
+
+修改 Alexa 语言：
+
 
 ### 配置 Alexa 语音助手
 

@@ -32,6 +32,18 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight=".30" />
+        <Button
+            android:id="@+id/en"
+            android:text="EN"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".30" />
+        <Button
+            android:id="@+id/ja"
+            android:text="JA"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight=".30" />
     </LinearLayout>
     <ScrollView
         android:id="@+id/main"

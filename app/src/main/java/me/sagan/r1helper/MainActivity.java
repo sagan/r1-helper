@@ -24,7 +24,7 @@ public class MainActivity extends Activity {
     boolean receiverRegistered = false;
     private boolean shortPress = false;
     private TextView mainText;
-    Button testButton,clearButton,loginButton,resetButton;
+    Button testButton,clearButton,loginButton,resetButton,enButton,jaButton;
     ScrollView main;
     DateFormat dateFormat;
 
@@ -39,6 +39,8 @@ public class MainActivity extends Activity {
         clearButton = (Button) findViewById(R.id.clear);
         loginButton = (Button) findViewById(R.id.login);
         resetButton = (Button) findViewById(R.id.reset);
+        enButton = (Button) findViewById(R.id.en);
+        jaButton = (Button) findViewById(R.id.ja);
         testButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 AlexaService.trigger();
@@ -57,6 +59,16 @@ public class MainActivity extends Activity {
         resetButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 AlexaService.reset();
+            }
+        });
+        enButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AlexaService.setLanguage("en-US");
+            }
+        });
+        jaButton.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                AlexaService.setLanguage("ja-JP");
             }
         });
     }

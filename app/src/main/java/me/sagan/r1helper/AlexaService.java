@@ -70,6 +70,36 @@ public class AlexaService extends IntentService {
     private List<AvsItem> avsQueue = new ArrayList<>();
     private static AlexaService instance;
 
+    public static void setLanguage(String lang) {
+        if( instance != null ) {
+            instance.sendMessage("Set language to " + lang);
+            instance.alexaManager.sendEvent(Event.getSettingsUpdatedEvent(lang), new AsyncCallback<AvsResponse, Exception>() {
+                @Override
+                public void start() {
+                    Log.i(TAG, "Set language start");
+                }
+
+                @Override
+                public void success(AvsResponse result) {
+                    if( instance != null ) {
+                        instance.sendMessage("Set language Success");
+                    }
+                }
+
+                @Override
+                public void failure(Exception error) {
+                    if( instance != null ) {
+                        instance.sendMessage( "Set language failure " + error.getMessage());
+                    }
+                }
+
+                @Override
+                public void complete() {
+                    Log.i(TAG, "Set language complete");
+                }
+            });
+        }
+    }
     public static void reset() {
         if( instance != null ) {
             instance.checkLogin();
@@ -173,7 +203,6 @@ public class AlexaService extends IntentService {
             Log.d(TAG, "playback_data_error " + e.getMessage());
         }
     };
-
 
     //async callback for commands sent to Alexa Voice
     private AsyncCallback<AvsResponse, Exception> requestCallback = new AsyncCallback<AvsResponse, Exception>() {

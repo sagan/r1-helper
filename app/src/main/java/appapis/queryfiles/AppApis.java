@@ -4,6 +4,7 @@ package appapis.queryfiles;
 import java.io.IOException;
 import java.util.HashMap;
 
+import me.sagan.r1helper.AlexaService;
 import me.sagan.r1helper.BackgroundService;
 import me.sagan.r1helper.StreamGobbler;
 import me.sagan.r1helper.Tool;
@@ -52,6 +53,18 @@ public class AppApis {
         try {
             if(BackgroundService.instance != null ) {
                 BackgroundService.instance.startFrontActivity();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String json = "{\"error\":0}";
+        return json.toString();
+    }
+
+    public String set(HashMap qparms){
+        try {
+            if(AlexaService.running) {
+                AlexaService.setLanguage(qparms.get("lang").toString());
             }
         } catch (Exception e) {
             e.printStackTrace();
