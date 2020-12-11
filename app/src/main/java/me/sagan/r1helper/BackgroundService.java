@@ -91,7 +91,7 @@ public class BackgroundService extends IntentService {
      */
     private void handleActionStartup(String param1, String param2) {
         if( !App.permissiive ) {
-            SystemClock.sleep(5000); // wait for magisk manager to be ready when first boot
+            SystemClock.sleep(10000); // wait for magisk manager to be ready when first boot
             try {
                 String [] setPermissiveCmd={"su","-c","setenforce", "0"};
                 Runtime.getRuntime().exec(setPermissiveCmd);
