@@ -171,12 +171,13 @@ public class PlaybackAudioPlayer {
         }
 
         //reset our player
-        getMediaPlayer().reset();
+//        getMediaPlayer().reset();
 
         if(!TextUtils.isEmpty(mItem.getToken()) && mItem.getToken().contains("PausePrompt")){
             //a gross work around for a broke pause mp3 coming from Amazon, play the local mp3
             try {
                 AssetFileDescriptor afd = mContext.getAssets().openFd("shhh.mp3");
+                release();
                 getMediaPlayer().setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -187,6 +188,7 @@ public class PlaybackAudioPlayer {
             //cast our item for easy access
             AvsPlayRemoteItem playItem = (AvsPlayRemoteItem) item;
             try {
+                release();
                 //set stream
                 getMediaPlayer().setAudioStreamType(AudioManager.STREAM_MUSIC);
                 //play new url
@@ -200,6 +202,7 @@ public class PlaybackAudioPlayer {
             //cast our item for easy access
             AvsPlayContentItem playItem = (AvsPlayContentItem) item;
             try {
+                release();
                 //set stream
                 getMediaPlayer().setAudioStreamType(AudioManager.STREAM_MUSIC);
                 //play new url
@@ -223,6 +226,7 @@ public class PlaybackAudioPlayer {
                 fos = new FileOutputStream(path);
                 fos.write(playItem.getAudio());
                 fos.close();
+                release();
                 //play our newly-written file
                 getMediaPlayer().setDataSource(path.getPath());
             } catch (IOException|IllegalStateException e) {

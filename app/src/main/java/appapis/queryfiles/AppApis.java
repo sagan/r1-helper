@@ -73,6 +73,18 @@ public class AppApis {
         return json.toString();
     }
 
+    public String reset(HashMap qparms){
+        try {
+            if(AlexaService.running) {
+                AlexaService.reset();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String json = "{\"error\":0}";
+        return json.toString();
+    }
+
     public String run(HashMap qparms){
         try {
             String cmd = "su -c ";

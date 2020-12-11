@@ -1,6 +1,7 @@
 package com.willblaschko.android.alexa.audioplayer;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -36,6 +37,14 @@ public class AlexaAudioPlayer {
     private Context mContext;
     private AvsItem mItem;
     private final List<Callback> mCallbacks = new ArrayList<>();
+
+    public Context context; // for debug
+    public void sendMessage(String content) {
+        Intent intent = new Intent();
+        intent.setAction("me.sagan.r1helper.action.MESSAGE");
+        intent.putExtra( "content",content);
+        context.sendBroadcast(intent);
+    }
 
     /**
      * Create our new AlexaAudioPlayer
@@ -94,6 +103,7 @@ public class AlexaAudioPlayer {
      */
     private MediaPlayer getMediaPlayer(){
         if(mMediaPlayer == null){
+//            sendMessage("--create mediaPlayer");
             mMediaPlayer = new MediaPlayer();
             mMediaPlayer.setWakeMode(mContext, PowerManager.PARTIAL_WAKE_LOCK);
             mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
@@ -171,12 +181,13 @@ public class AlexaAudioPlayer {
         }
 
         //reset our player
-        getMediaPlayer().reset();
+//        getMediaPlayer().reset();
 
         if(!TextUtils.isEmpty(mItem.getToken()) && mItem.getToken().contains("PausePrompt")){
             //a gross work around for a broke pause mp3 coming from Amazon, play the local mp3
             try {
                 AssetFileDescriptor afd = mContext.getAssets().openFd("shhh.mp3");
+                release(); // workaround for a bug that freeze mediaplayer after prepareAsync() without any listener event happened later.
                 getMediaPlayer().setDataSource(afd.getFileDescriptor(),afd.getStartOffset(),afd.getLength());
             } catch (IOException e) {
                 e.printStackTrace();
@@ -187,6 +198,7 @@ public class AlexaAudioPlayer {
             //cast our item for easy access
             AvsPlayRemoteItem playItem = (AvsPlayRemoteItem) item;
             try {
+                release();
                 //set stream
                 getMediaPlayer().setAudioStreamType(AudioManager.STREAM_MUSIC);
                 //play new url
@@ -200,6 +212,7 @@ public class AlexaAudioPlayer {
             //cast our item for easy access
             AvsPlayContentItem playItem = (AvsPlayContentItem) item;
             try {
+                release();
                 //set stream
                 getMediaPlayer().setAudioStreamType(AudioManager.STREAM_MUSIC);
                 //play new url
@@ -223,8 +236,10 @@ public class AlexaAudioPlayer {
                 fos = new FileOutputStream(path);
                 fos.write(playItem.getAudio());
                 fos.close();
+                release();
                 //play our newly-written file
                 getMediaPlayer().setDataSource(path.getPath());
+//                sendMessage("--datasource " + path.getPath());
             } catch (IOException|IllegalStateException e) {
                 e.printStackTrace();
                 //bubble up our error
@@ -234,6 +249,7 @@ public class AlexaAudioPlayer {
         }
         //prepare our player, this will start once prepared because of mPreparedListener
         try {
+//            sendMessage("--prepareSync " + (mMediaPlayer != null ) );
             getMediaPlayer().prepareAsync();
         }catch (IllegalStateException e){
             bubbleUpError(e);
@@ -356,6 +372,7 @@ public class AlexaAudioPlayer {
     private MediaPlayer.OnPreparedListener mPreparedListener = new MediaPlayer.OnPreparedListener() {
         @Override
         public void onPrepared(MediaPlayer mp) {
+//            sendMessage("-- onPrepared");
             for(Callback callback: mCallbacks){
                 callback.playerPrepared(mItem);
                 callback.playerProgress(mItem, mMediaPlayer.getCurrentPosition(), 0);

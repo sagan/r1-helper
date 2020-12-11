@@ -18,6 +18,7 @@ import com.willblaschko.android.alexa.interfaces.AvsItem;
 import com.willblaschko.android.alexa.interfaces.AvsResponse;
 import com.willblaschko.android.alexa.interfaces.audioplayer.AvsPlayContentItem;
 import com.willblaschko.android.alexa.interfaces.audioplayer.AvsPlayRemoteItem;
+import com.willblaschko.android.alexa.interfaces.errors.AvsResponseException;
 import com.willblaschko.android.alexa.interfaces.playbackcontrol.AvsMediaNextCommandItem;
 import com.willblaschko.android.alexa.interfaces.playbackcontrol.AvsMediaPauseCommandItem;
 import com.willblaschko.android.alexa.interfaces.playbackcontrol.AvsMediaPlayCommandItem;
@@ -102,8 +103,11 @@ public class AlexaService extends IntentService {
     }
     public static void reset() {
         if( instance != null ) {
-            instance.checkLogin();
             instance.alexaManager.cancelAudioRequest();
+            instance.checkLogin();
+            instance.avsQueue.clear();
+            instance.audioPlayer.stop();
+            instance.playbackAudioPlayer.stop();
             instance.stopListening();
             instance.restartRecorder();
         }
@@ -148,7 +152,7 @@ public class AlexaService extends IntentService {
         @Override
         public void itemComplete(AvsItem completedItem) {
             playing = false;
-            Tool.sendMessage(AlexaService.this, "play response complete");
+            sendMessage("play response complete");
             avsQueue.remove(completedItem);
             audioPlayer.stop();
             checkQueue();
@@ -156,7 +160,7 @@ public class AlexaService extends IntentService {
 
         @Override
         public boolean playerError(AvsItem item, int what, int extra) {
-            Log.d(TAG, "play_error " +  ( item != null  ? item.getToken() : "null") );
+            sendMessage("play error " +  ( item != null  ? item.getToken() : "null") );
             avsQueue.remove(item);
             audioPlayer.stop();
             return false;
@@ -164,7 +168,7 @@ public class AlexaService extends IntentService {
 
         @Override
         public void dataError(AvsItem item, Exception e) {
-            Log.d(TAG, "play_data_error " + e.getMessage());
+            sendMessage("play data_error " + e.getMessage());
         }
     };
 
@@ -265,16 +269,19 @@ public class AlexaService extends IntentService {
 
         //if we're out of things, hang up the phone and move on
         if (avsQueue.size() == 0) {
-            Log.d(TAG, "queue empty");
+            sendMessage("queue empty");
             playbackAudioPlayer.play();
             return;
         }
 
         AvsItem current = avsQueue.get(0);
+        sendMessage("current queue item " + current.getClass().getName());
 
-        Log.d(TAG, "current queue item " + current.getClass().getName());
-
-        if (current instanceof AvsPlayRemoteItem) {
+        if( current instanceof AvsResponseException) {
+            audioPlayer.stop();
+            playbackAudioPlayer.stop();
+            avsQueue.clear();
+        } else if (current instanceof AvsPlayRemoteItem) {
             //play a URL
             audioPlayer.stop();
             alexaManager.updatePlaybackStateEvent(current, "PLAYING");
@@ -484,6 +491,7 @@ public class AlexaService extends IntentService {
         playbackAudioPlayer = PlaybackAudioPlayer.getInstance(this);
         audioPlayer.addCallback(alexaAudioPlayerCallback);
         playbackAudioPlayer.addCallback(playbackAudioPlayerCallback);
+        audioPlayer.context = this;
         instance = this;
     }
 
