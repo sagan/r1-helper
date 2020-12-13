@@ -69,7 +69,8 @@ public class AlexaService extends IntentService {
     private PlaybackAudioPlayer playbackAudioPlayer;
     AudioCue audioCue;
     private List<AvsItem> avsQueue = new ArrayList<>();
-    private static AlexaService instance;
+    public static AlexaService instance;
+    private long lastTrimCacheTime = 0;
 
     public static void setLanguage(String lang) {
         if( instance != null ) {
@@ -109,7 +110,6 @@ public class AlexaService extends IntentService {
             instance.audioPlayer.stop();
             instance.playbackAudioPlayer.stop();
             instance.stopListening();
-            instance.restartRecorder();
         }
     }
     public static void trigger() {
@@ -169,6 +169,7 @@ public class AlexaService extends IntentService {
         @Override
         public void dataError(AvsItem item, Exception e) {
             sendMessage("play data_error " + e.getMessage());
+            reset();
         }
     };
 
@@ -205,6 +206,7 @@ public class AlexaService extends IntentService {
         @Override
         public void dataError(AvsItem item, Exception e) {
             Log.d(TAG, "playback_data_error " + e.getMessage());
+            reset();
         }
     };
 
@@ -278,12 +280,12 @@ public class AlexaService extends IntentService {
         sendMessage("current queue item " + current.getClass().getName());
 
         if( current instanceof AvsResponseException) {
-            audioPlayer.stop();
-            playbackAudioPlayer.stop();
+            stopAlexaAudio();
+            stopPlaybackAudio();
             avsQueue.clear();
         } else if (current instanceof AvsPlayRemoteItem) {
             //play a URL
-            audioPlayer.stop();
+            stopAlexaAudio();
             alexaManager.updatePlaybackStateEvent(current, "PLAYING");
             if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current ) {
                 AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
@@ -296,7 +298,7 @@ public class AlexaService extends IntentService {
             }
         } else if (current instanceof AvsPlayContentItem) {
             //play a URL
-            audioPlayer.stop();
+            stopAlexaAudio();
             alexaManager.updatePlaybackStateEvent(current, "PLAYING");
             if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current) {
                 AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
@@ -321,18 +323,18 @@ public class AlexaService extends IntentService {
             }
         } else if (current instanceof AvsStopItem) {
             //stop our play
-            audioPlayer.stop();
-            playbackAudioPlayer.stop();
+            stopAlexaAudio();
+            stopPlaybackAudio();
             avsQueue.remove(current);
         } else if (current instanceof AvsReplaceAllItem) {
-            audioPlayer.stop();
-            playbackAudioPlayer.stop();
+            stopAlexaAudio();
+            stopPlaybackAudio();
             avsQueue.remove(current);
         } else if (current instanceof AvsReplaceEnqueuedItem) {
             avsQueue.remove(current);
         } else if (current instanceof AvsExpectSpeechItem) {
             //listen for user input
-            audioPlayer.stop();
+            stopAlexaAudio();
             playbackAudioPlayer.pause();
             avsQueue.remove(current);
 //            avsQueue.clear();
@@ -368,13 +370,13 @@ public class AlexaService extends IntentService {
         Tool.setLight(0xFFFFFF);
         audioCue.playStartSoundAndSleep();
         recorder.consumeRecordingAndTruncate();
-        listeningStartTime = (new Date()).getTime();
+        listeningStartTime = System.currentTimeMillis();
 
         Intent stickyIntent = new Intent(this, DownChannelService.class);
         startService(stickyIntent);
         Log.i(TAG, "Start down channel service.");
 
-        audioPlayer.stop();
+        stopAlexaAudio();
         playbackAudioPlayer.pause();
         alexaManager.sendAudioRequest(requestBody, requestCallback);
     }
@@ -402,7 +404,7 @@ public class AlexaService extends IntentService {
         @Override
         public void writeTo(BufferedSink sink) throws IOException {
             while (true) {
-                long passedTime =  (new Date()).getTime() - listeningStartTime;
+                long passedTime =  System.currentTimeMillis() - listeningStartTime;
                 if( recorder.getState() == AudioRecorder.State.ERROR ) {
                     Log.d(TAG, "recorder error");
                     break;
@@ -551,9 +553,8 @@ public class AlexaService extends IntentService {
         File model = new File(snowboyDirectory, "alexa.umdl");
         File common = new File(snowboyDirectory, "common.res");
 
-        // TODO: Set Sensitivity
         snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
-        snowboyDetect.setSensitivity("0.1"); // 0.48,0.43
+        snowboyDetect.setSensitivity("0.4"); //[0,1], Increasing the sensitivity value lead to better detection rate, but also higher false alarm rate.
         snowboyDetect.applyFrontend(true);
         SystemClock.sleep(2000);
         checkLogin();
@@ -564,6 +565,11 @@ public class AlexaService extends IntentService {
         snowboyDetect.reset();
         recorder.start();
         while( true ) {
+            long t = System.currentTimeMillis();
+            if( t - lastTrimCacheTime > 1800000 ) {
+                AlexaAudioPlayer.trimCache(this);
+                lastTrimCacheTime = t;
+            }
             try {
                 int result = 0;
                 if( !listening ) {
@@ -596,6 +602,22 @@ public class AlexaService extends IntentService {
     void sendMessage(String content) {
         Log.d(TAG, content);
         Tool.sendMessage(this, content);
+    }
+
+    void stopAlexaAudio() {
+        AvsItem item = audioPlayer.getCurrentItem();
+        if( item != null ) {
+            avsQueue.remove(item);
+        }
+        audioPlayer.stop();
+    }
+
+    void stopPlaybackAudio() {
+        AvsItem item = playbackAudioPlayer.getCurrentItem();
+        if( item != null ) {
+            avsQueue.remove(item);
+        }
+        playbackAudioPlayer.stop();
     }
 
 }

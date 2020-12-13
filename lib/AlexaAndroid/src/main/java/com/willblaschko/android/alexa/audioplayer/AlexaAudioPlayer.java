@@ -68,7 +68,7 @@ public class AlexaAudioPlayer {
         return mInstance;
     }
 
-    private static void trimCache(Context context) {
+    public static void trimCache(Context context) {
         try {
             File dir = context.getCacheDir();
             if (dir != null && dir.isDirectory()) {
@@ -182,6 +182,7 @@ public class AlexaAudioPlayer {
 
         //reset our player
 //        getMediaPlayer().reset();
+//        sendMessage("--to play " + mItem.getToken());
 
         if(!TextUtils.isEmpty(mItem.getToken()) && mItem.getToken().contains("PausePrompt")){
             //a gross work around for a broke pause mp3 coming from Amazon, play the local mp3
@@ -238,8 +239,8 @@ public class AlexaAudioPlayer {
                 fos.close();
                 release();
                 //play our newly-written file
-                getMediaPlayer().setDataSource(path.getPath());
 //                sendMessage("--datasource " + path.getPath());
+                getMediaPlayer().setDataSource(path.getPath());
             } catch (IOException|IllegalStateException e) {
                 e.printStackTrace();
                 //bubble up our error

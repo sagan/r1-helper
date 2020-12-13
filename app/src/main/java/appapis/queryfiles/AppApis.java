@@ -1,6 +1,8 @@
 
 package appapis.queryfiles;
 
+import com.willblaschko.android.alexa.audioplayer.AlexaAudioPlayer;
+
 import java.io.IOException;
 import java.util.HashMap;
 
@@ -77,6 +79,18 @@ public class AppApis {
         try {
             if(AlexaService.running) {
                 AlexaService.reset();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        String json = "{\"error\":0}";
+        return json.toString();
+    }
+
+    public String clear(HashMap qparms){
+        try {
+            if(AlexaService.instance != null) {
+                AlexaAudioPlayer.trimCache(AlexaService.instance);
             }
         } catch (Exception e) {
             e.printStackTrace();

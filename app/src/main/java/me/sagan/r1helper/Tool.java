@@ -6,6 +6,7 @@ import android.util.Log;
 
 import com.phicomm.speaker.player.light.LedLight;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 
