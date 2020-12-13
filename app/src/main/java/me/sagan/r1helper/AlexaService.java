@@ -554,7 +554,7 @@ public class AlexaService extends IntentService {
         File common = new File(snowboyDirectory, "common.res");
 
         snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
-        snowboyDetect.setSensitivity("0.4"); //[0,1], Increasing the sensitivity value lead to better detection rate, but also higher false alarm rate.
+        snowboyDetect.setSensitivity("0.3"); //[0,1], Increasing the sensitivity value lead to better detection rate, but also higher false alarm rate.
         snowboyDetect.applyFrontend(true);
         SystemClock.sleep(2000);
         checkLogin();
