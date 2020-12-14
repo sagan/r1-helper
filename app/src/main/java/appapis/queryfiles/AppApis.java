@@ -1,6 +1,8 @@
 
 package appapis.queryfiles;
 
+import android.media.audiofx.AcousticEchoCanceler;
+
 import com.willblaschko.android.alexa.audioplayer.AlexaAudioPlayer;
 
 import java.io.IOException;
@@ -72,6 +74,13 @@ public class AppApis {
             e.printStackTrace();
         }
         String json = "{\"error\":0}";
+        return json.toString();
+    }
+
+    public String info(HashMap qparms){
+        String json = "{" +
+                "\"acousticEchoCancelerAvailable\":" + (AcousticEchoCanceler.isAvailable() ? "true" : "false") // Unforuntuately, false
+                + "}";
         return json.toString();
     }
 
