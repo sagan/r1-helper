@@ -114,10 +114,35 @@ ALexa 语音助手默认使用英文。如果想要修改 Alexa 语言，可以�
 
 本 app 会在 tcp/9000 端口启动一个 http 服务器，通过这个 http 接口可以对本 app 和 R1 设备进行一些控制：
 
+HTTP API 列表：
+
 * GET /reboot : 重启设备。（需要 root 权限）
 * GET /run?cmd=pwd : 在设备上运行一个命令并返回结果。（需要 root 权限）
-* GET /set?lang=ja-JP : 设置 Alexa 语音助手使用的语言。可选的 lang 语言值包括：de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-CA, fr-FR, it-IT, ja-JP。
+* GET /status : 返回 app 运行状态、配置、最近日志等信息。
+* GET /log : 返回 app 运行日志。
+* GET /set?lang=ja-JP : 更改设备设定。可选参数：
+    * lang : 设置 Alexa 语音助手使用的语言。可选的 lang 语言值包括：de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-CA, fr-FR, it-IT, ja-JP。
+    * mode : 更改 app 运行模式。mode 值：0 - 正常模式(显示 LED 灯和氛围灯效果); 1 - 关闭 LED 灯; 2 - 蓝牙配对模式 (LED灯交替闪烁蓝、白色)。
+* GET /config?sensitivity=0.3 : 获取或修改 app (持久化)首选项参数。可选参数：
+    * sensitivity : 语音助手唤醒词识别敏感度。范围 [0,1]。数值越大则越容易唤醒，但误唤醒率也会更高。
+    * setpassword : 设置 HTTP API 的密码。
 * GET /reset : 重置 Alexa 语音助手状态。如果语音助手一直没反应或不听使唤，可以尝试重置。
+
+HTTP API 默认无需验证，使用 GET /config?setpassword=123 接口可以设置密码。设置密码以后，以上所有 API 访问时都必须带上 password 参数提供当前密码。
+
+如果忘记了设置的密码，可以用 adb 清除本 app 全部数据以恢复初始状态：
+
+```
+adb shell /system/bin/pm clear me.sagan.r1helper
+```
+
+或卸载本 app 然后重新安装一次亦可。
+
+```
+adb shell /system/bin/pm uninstall me.sagan.r1helper
+adb shell /system/bin/pm install -t -r /data/local/tmp/app-debug.apk
+```
+
 
 ### 配置设备地理位置 / 时区
 

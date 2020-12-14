@@ -3,8 +3,10 @@ package me.sagan.r1helper;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.media.AudioManager;
 import android.os.SystemClock;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 
@@ -34,8 +36,6 @@ import com.willblaschko.android.alexa.interfaces.speechsynthesizer.AvsSpeakItem;
 import com.willblaschko.android.alexa.requestbody.DataRequestBody;
 import com.willblaschko.android.alexa.service.DownChannelService;
 
-//import com.willblaschko.android.alexa.service.*
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -53,6 +53,7 @@ import okio.BufferedSink;
 public class AlexaService extends IntentService {
     private static final String TAG = "AlexaService";
     private static final String ACTION_ALEXA = "me.sagan.r1helper.action.ALEXA";
+    SharedPreferences preferences;
 
     public static boolean running = false;
     public int isLogin = 0;
@@ -141,7 +142,7 @@ public class AlexaService extends IntentService {
         @Override
         public void playerPrepared(AvsItem pendingItem) {
             playing = true;
-            Tool.sendMessage(AlexaService.this, "play response");
+            sendMessage("play response");
         }
 
         @Override
@@ -177,7 +178,7 @@ public class AlexaService extends IntentService {
         @Override
         public void playerPrepared(AvsItem pendingItem) {
             playing = true;
-            Tool.sendMessage(AlexaService.this, "play content");
+            sendMessage("play content");
         }
 
         @Override
@@ -188,7 +189,7 @@ public class AlexaService extends IntentService {
         @Override
         public void itemComplete(AvsItem completedItem) {
             playing = false;
-            Tool.sendMessage(AlexaService.this, "play content complete");
+            sendMessage("play content complete");
             avsQueue.remove(completedItem);
             alexaManager.finishedPlayback();
             playbackAudioPlayer.stop();
@@ -485,6 +486,7 @@ public class AlexaService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         //get our AlexaManager instance for convenience
         recorder = new RawAudioRecorder(AUDIO_RATE);
         alexaManager = AlexaManager.getInstance(this);
@@ -494,7 +496,22 @@ public class AlexaService extends IntentService {
         audioPlayer.addCallback(alexaAudioPlayerCallback);
         playbackAudioPlayer.addCallback(playbackAudioPlayerCallback);
         audioPlayer.context = this;
+
+        SnowboyUtils.copyAssets(this);
+        File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
+        File model = new File(snowboyDirectory, "alexa.umdl");
+        File common = new File(snowboyDirectory, "common.res");
+        snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
+        config();
         instance = this;
+    }
+
+    public void config() {
+        //sensitivity: [0,1], Increasing the value lead to better detection rate, but also higher false alarm rate.
+        String sensitivity = preferences.getString("sensitivity", getString(R.string.default_sensitivity));
+        sendMessage("Set snowboy sensitivity to " + sensitivity);
+        snowboyDetect.setSensitivity(sensitivity);
+        snowboyDetect.applyFrontend(true);
     }
 
     public static void startAlexa(Context context) {
@@ -548,15 +565,6 @@ public class AlexaService extends IntentService {
     }
 
     private void go() {
-        SnowboyUtils.copyAssets(this);
-        File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
-        File model = new File(snowboyDirectory, "alexa.umdl");
-        File common = new File(snowboyDirectory, "common.res");
-
-        snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
-        snowboyDetect.setSensitivity("0.3"); //[0,1], Increasing the sensitivity value lead to better detection rate, but also higher false alarm rate.
-        snowboyDetect.applyFrontend(true);
-        SystemClock.sleep(2000);
         checkLogin();
 
         listening = false;
@@ -601,7 +609,7 @@ public class AlexaService extends IntentService {
 
     void sendMessage(String content) {
         Log.d(TAG, content);
-        Tool.sendMessage(this, content);
+        Tool.addLog(this, content);
     }
 
     void stopAlexaAudio() {

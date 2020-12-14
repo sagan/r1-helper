@@ -52,7 +52,7 @@ public class BackgroundService extends IntentService {
         this.adapter = BluetoothAdapter.getDefaultAdapter();
         instance = this;
         try {
-            TinyWebServer.startServer("0.0.0.0",9000, getDir("web", Context.MODE_PRIVATE).toString() );
+            TinyWebServer.startServer("0.0.0.0",9000, getDir("web", Context.MODE_PRIVATE).toString(), this );
         } catch( Exception e ) {
             Log.d(TAG, "error start web server " + e.toString());
         }

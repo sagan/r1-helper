@@ -6,13 +6,18 @@ import android.util.Log;
 
 import com.phicomm.speaker.player.light.LedLight;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
+import java.text.DateFormat;
+import java.util.Date;
 
 public class Tool {
     private static final String TAG = "Tool";
     private static int currentColor = 0;
+    private static DateFormat dateFormat = DateFormat.getDateTimeInstance();
 
 //    private static OutputStream lightFile;
 //    static {
@@ -34,11 +39,18 @@ public class Tool {
         return escaped;
     }
 
-    public static void sendMessage(Context context, String content) {
-        Intent intent = new Intent();
-        intent.setAction("me.sagan.r1helper.action.MESSAGE");
-        intent.putExtra( "content",content);
-        context.sendBroadcast(intent);
+    public static void addLog(Context context, String content) {
+        if( content != null ) {
+            if( App.log.length() > 10000 ) {
+                App.log = StringUtils.substring(App.log, 5000);
+            }
+            App.log += dateFormat.format(new Date()) + ": " + content + "\n";
+        }
+        if( context != null ) {
+            Intent intent = new Intent();
+            intent.setAction("me.sagan.r1helper.action.REFRESH");
+            context.sendBroadcast(intent);
+        }
     }
 
     public static void setLight(int color) {
@@ -52,5 +64,16 @@ public class Tool {
             LedLight.setColor(color);
             currentColor = color;
         }
+    }
+
+    public static boolean empty(Object obj) {
+        if( obj == null ) {
+            return true;
+        }
+        if( obj instanceof String) {
+            String str = (String) obj;
+            return str.equals("");
+        }
+        return false;
     }
 }

@@ -14,6 +14,8 @@ import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.text.DateFormat;
 import java.util.Date;
 
@@ -97,11 +99,12 @@ public class MainActivity extends Activity {
                 receiver = new MessageReceiver();
             }
             Log.d("AlexaService", "onResume register receiver");
-            registerReceiver(receiver, new IntentFilter("me.sagan.r1helper.action.MESSAGE"));
+            registerReceiver(receiver, new IntentFilter("me.sagan.r1helper.action.REFRESH"));
             receiverRegistered = true;
         }
         Intent intent = new Intent("me.sagan.r1helper.start");
         sendBroadcast(intent);
+        refresh();
     }
     @Override
     public boolean onKeyLongPress(int keyCode, KeyEvent event) {
@@ -147,19 +150,14 @@ public class MainActivity extends Activity {
     class MessageReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if (intent.getAction().equals("me.sagan.r1helper.action.MESSAGE")) {
-                String content = intent.getStringExtra("content");
-                appendMessage(content);
+            if (intent.getAction().equals("me.sagan.r1helper.action.REFRESH")) {
+                refresh();
             }
         }
     }
 
-    void appendMessage(String content) {
-        CharSequence text = mainText.getText();
-        if( text.length() > 10000 ) {
-            mainText.setText( text.subSequence(5000, text.length()) );
-        }
-        mainText.append("\n" + dateFormat.format(new Date()) + ": " + content + "\n");
+    void refresh() {
+        mainText.setText(App.log);
         main.post(new Runnable() {
             @Override
             public void run() {

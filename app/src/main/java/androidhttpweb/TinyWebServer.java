@@ -23,6 +23,11 @@
  */
 package androidhttpweb;
 
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.preference.PreferenceManager;
+import android.util.Log;
+
 import java.io.BufferedWriter;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -46,6 +51,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
+
+import at.favre.lib.crypto.bcrypt.BCrypt;
 
 /**
  *
@@ -152,14 +159,15 @@ public class TinyWebServer extends Thread {
     public static int SERVER_PORT=9000;
     public static boolean isStart=true;
     public static String INDEX_FILE_NAME="index.html";
+    private SharedPreferences preferences;
 
 
-    public TinyWebServer(final String ip, final int port) throws IOException {
+    public TinyWebServer(final String ip, final int port, Context context) throws IOException {
 
         InetAddress addr = InetAddress.getByName(ip); ////"172.31.0.186"); 
         serverSocket = new ServerSocket(port, 100, addr);
         serverSocket.setSoTimeout(5000);  //set timeout for listner
-
+        preferences = PreferenceManager.getDefaultSharedPreferences(context);
     }
 
     @Override
@@ -278,13 +286,16 @@ public class TinyWebServer extends Thread {
     public void processLocation(DataOutputStream out, String location, String postData) {
 
         String data = "";
+        boolean needApiAuth = true;
         switch (location) {
             case "/":
                 //root location, server index file
-                CONTENT_TYPE = "text/html";
-                data=readFile(WEB_DIR_PATH+"/"+INDEX_FILE_NAME);
-                constructHeader(out, data.length() + "", data);
-                break;
+//                CONTENT_TYPE = "text/html";
+//                data=readFile(WEB_DIR_PATH+"/"+INDEX_FILE_NAME);
+//                constructHeader(out, data.length() + "", data);
+//                break;
+                location += "root";
+                needApiAuth = false;
             default:
 
                 System.out.println("url location -> " + location);
@@ -294,8 +305,8 @@ public class TinyWebServer extends Thread {
                 if (dirPath.length > 1) {
                     String fileName = dirPath[dirPath.length - 1];
                     HashMap qparms = (HashMap) splitQuery(geturl.getQuery());
+                    if (qparms==null){ qparms=new HashMap<String,String>();}
                     if(REQUEST_TYPE.equals("POST")){
-                        if (qparms==null){ qparms=new HashMap<String,String>();}
                         qparms.put("_POST", postData);
                     }
                     //System.out.println("File name " + fileName);
@@ -321,8 +332,19 @@ public class TinyWebServer extends Thread {
                             }
                         }
                     }else{
-                        data = getResultByName(fileName, qparms);
+                        String password = preferences.getString("password", "");
+                        if( !password.equals("") && needApiAuth && (
+                                !qparms.containsKey("password") ||
+                                !BCrypt.verifyer().verify(qparms.get("password").toString().toCharArray(), password).verified
+                        ) ) {
+                            STATUS = TinyWebServer.FORBIDDEN;
+                            data = "Unauthorized";
+                        } else {
+                            qparms.remove("password");
+                            data = getResultByName(fileName, qparms);
+                        }
                         constructHeader(out, data.length() + "", data);
+//                        Log.d("WEBHTTP", "output data " + data.length() + " " + data);
                     }
 
 
@@ -453,12 +475,12 @@ public class TinyWebServer extends Thread {
         }
         printHeader(pw, "Date", gmtFrmt.format(new Date()));
         printHeader(pw, "Connection", (this.keepAlive ? "keep-alive" : "close"));
-        printHeader(pw, "Content-Length", size);
+//        printHeader(pw, "Content-Length", size); // do not send size to make it compatible with utf-8 string output
         printHeader(pw, "Server", SERVER_NAME);
         pw.append("\r\n");
         pw.append(data);
         pw.flush();
-        //pw.close();
+        pw.close();
     }
 
     private void constructHeaderImage(DataOutputStream output, String size, byte[] data) {
@@ -544,12 +566,12 @@ public class TinyWebServer extends Thread {
 
     }
 
-    public static void startServer(String ip,int port,String public_dir){
+    public static void startServer(String ip,int port,String public_dir, Context context){
         try {
 
             isStart=true;
             init(ip,port,public_dir);
-            Thread t = new TinyWebServer(SERVER_IP, SERVER_PORT);
+            Thread t = new TinyWebServer(SERVER_IP, SERVER_PORT, context);
             t.start();
             System.out.println("Server Started !");
 
