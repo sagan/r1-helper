@@ -413,7 +413,7 @@ public class AlexaService extends IntentService {
                     Log.d(TAG, "passed 10 seconds");
                     break;
                 }
-                if( recorder.isPausing() && passedTime > 2000 ) {
+                if( recorder.isPausing() && passedTime > 1500 ) {
                     Log.d(TAG, "recorder isPausing");
                     break;
                 }
