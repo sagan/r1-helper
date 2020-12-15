@@ -379,9 +379,9 @@ public class AlexaService extends IntentService {
         recorder.consumeRecordingAndTruncate();
         listeningStartTime = System.currentTimeMillis();
 
-        Intent stickyIntent = new Intent(this, DownChannelService.class);
-        startService(stickyIntent);
-        Log.i(TAG, "Start down channel service.");
+//        Intent stickyIntent = new Intent(this, DownChannelService.class);
+//        startService(stickyIntent);
+//        Log.i(TAG, "Start down channel service.");
 
         stopAlexaAudio();
         playbackAudioPlayer.pause();

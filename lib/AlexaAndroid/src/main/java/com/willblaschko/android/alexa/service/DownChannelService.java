@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.util.Log;
 
 import com.willblaschko.android.alexa.AlexaManager;
@@ -27,6 +28,8 @@ import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import okhttp3.MultipartReader;
+import okhttp3.ResponseBody;
 import okio.BufferedSource;
 
 /**
@@ -101,6 +104,7 @@ public class DownChannelService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        Log.d(TAG, "onDestroy");
         if(currentCall != null){
             currentCall.cancel();
         }
@@ -109,6 +113,7 @@ public class DownChannelService extends Service {
 
 
     private void openDownChannel(){
+        Log.d(TAG, "openDownChannel");
         TokenManager.getAccessToken(alexaManager.getAuthorizationManager().getAmazonAuthorizationManager(), DownChannelService.this, new TokenManager.TokenCallback() {
             @Override
             public void onSuccess(String token) {
@@ -125,12 +130,12 @@ public class DownChannelService extends Service {
                 currentCall.enqueue(new Callback() {
                     @Override
                     public void onFailure(Call call, IOException e) {
-
+                        Log.d(TAG, "downChannel onFailure " + e.getMessage());
                     }
 
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
-
+                        Log.d(TAG, "downchannel response start " + response.header("content-type"));
                         alexaManager.sendEvent(Event.getSynchronizeStateEvent(), new ImplAsyncCallback<AvsResponse, Exception>() {
                             @Override
                             public void success(AvsResponse result) {
@@ -139,26 +144,44 @@ public class DownChannelService extends Service {
                             }
                         });
 
-                        BufferedSource bufferedSource = response.body().source();
-
-                        while (!bufferedSource.exhausted()) {
-                            String line = bufferedSource.readUtf8Line();
-                            try {
-                                Directive directive = ResponseParser.getDirective(line);
-                                handler.handleDirective(directive);
-
-                                //surface to our UI if it's up
-                                try {
-                                    AvsItem item = ResponseParser.parseDirective(directive);
-                                    EventBus.getDefault().post(item);
-                                } catch (IOException e) {
-                                    e.printStackTrace();
+                        // HTTP/2 half-open long connection
+                        // Content-Type: multipart/related; boundary=------abcde123; type=application/json
+                        try {
+                            ResponseBody body = response.body();
+//                            Log.d(TAG, ":--" + body.contentType().toString());
+                            MultipartReader multipartReader = new MultipartReader(body.source(), "------abcde123");
+                            while(true) {
+                                Log.d(TAG, "reading downchannel stream");
+                                MultipartReader.Part part = multipartReader.nextPart();
+                                if( part == null ) {
+                                    break;
                                 }
-                            } catch (Exception e) {
-                                Log.e(TAG, "Bad line");
+                                BufferedSource bufferedSource = part.body();
+                                String line = bufferedSource.readUtf8Line();
+                                while (!bufferedSource.exhausted()) {
+                                    line += bufferedSource.readUtf8();
+                                }
+                                Log.d(TAG, "--- "  + line);
+                                try {
+                                    Directive directive = ResponseParser.getDirective(line);
+                                    handler.handleDirective(directive);
+                                    //surface to our UI if it's up
+                                    try {
+                                        AvsItem item = ResponseParser.parseDirective(directive);
+                                        EventBus.getDefault().post(item);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                } catch (Exception e) {
+                                    Log.e(TAG, "Bad line");
+                                }
                             }
+                        } catch(Exception e) {
+                            Log.d(TAG, "down channel error " + e.getMessage());
                         }
-
+                        Log.d(TAG, "down channel end");
+                        SystemClock.sleep(5000);
+                        openDownChannel();
                     }
                 });
 

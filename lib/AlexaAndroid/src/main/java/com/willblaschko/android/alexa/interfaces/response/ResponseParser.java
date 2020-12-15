@@ -48,8 +48,6 @@ import java.util.regex.Pattern;
 import okhttp3.Headers;
 import okhttp3.Response;
 
-import static okhttp3.internal.Util.UTF_8;
-
 /**
  * Static helper class to parse incoming responses from the Alexa server and generate a corresponding
  * {@link AvsResponse} item with all the directives matched to their audio streams.
@@ -57,6 +55,8 @@ import static okhttp3.internal.Util.UTF_8;
  * @author will on 5/21/2016.
  */
 public class ResponseParser {
+
+    public static final Charset UTF_8 = Charset.forName("UTF-8");
 
     public static final String TAG = "ResponseParser";
 

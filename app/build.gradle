@@ -1,5 +1,10 @@
 apply plugin: 'com.android.application'
 
+configurations {
+    cleanedAnnotations
+    compile.exclude group: 'org.jetbrains' , module:'annotations'
+}
+
 android {
     signingConfigs {
         release {
@@ -8,6 +13,10 @@ android {
             storeFile file('../key.jks')
             storePassword '123456'
         }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     compileSdkVersion 28
     defaultConfig {
