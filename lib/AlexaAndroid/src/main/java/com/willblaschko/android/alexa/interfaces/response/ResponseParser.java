@@ -211,7 +211,7 @@ public class ResponseParser {
             case Directive.TYPE_ADJUST_VOLUME:
                 return new AvsAdjustVolumeItem(directive.getPayload().getToken(), directive.getPayload().getVolume());
             case Directive.TYPE_EXPECT_SPEECH:
-                return new AvsExpectSpeechItem(directive.getPayload().getToken(), directive.getPayload().getTimeoutInMilliseconds());
+                return new AvsExpectSpeechItem(directive.getPayload().getToken(), directive.getPayload().getTimeoutInMilliseconds(), directive.getPayload().getInitiator());
             case Directive.TYPE_MEDIA_PLAY:
                 return new AvsMediaPlayCommandItem(directive.getPayload().getToken());
             case Directive.TYPE_MEDIA_PAUSE:

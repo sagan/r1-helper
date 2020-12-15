@@ -26,8 +26,8 @@ public abstract class SpeechSendEvent extends SendEvent {
 
     @NotNull
     @Override
-    protected Event.EventWrapper getEventWrapper(List<Event> context) {
-        return Event.getSpeechRecognizerEventWrapper(context);
+    protected Event.EventWrapper getEventWrapper(List<Event> context, Event.Initiator initiator) {
+        return Event.getSpeechRecognizerEventWrapper(context, initiator);
     }
 
     @Override

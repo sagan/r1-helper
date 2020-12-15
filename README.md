@@ -2,7 +2,7 @@
 
 # R1Helper / R1 助手
 
-适用于斐讯 R1 音箱 (Phicomm R1 speaker) 的 Amazon Alexa 语音助手 app。基于 [AlexaAndroid](https://github.com/willblaschko/AlexaAndroid) 这个框架开发。语音唤醒 ("Alexa") 使用的是 [Snowboy](https://snowboy.kitt.ai/)。
+适用于斐讯 R1 音箱 (Phicomm R1 speaker) 的 Amazon Alexa 语音助手 app。基于 [AlexaAndroid](https://github.com/willblaschko/AlexaAndroid) 框架开发（这个框架使用了 [Alexa Voice Service (HTTP) API](https://developer.amazon.com/en-US/docs/alexa/alexa-voice-service/api-overview.html)）。语音唤醒 ("Alexa") 使用的是 [Snowboy](https://snowboy.kitt.ai/)。
 
 * Target SDK level: 22 (Android 5.1) (ARMv7 only)
 * Package: me.sagan.r1helper

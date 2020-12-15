@@ -14,6 +14,7 @@ import com.willblaschko.android.alexa.interfaces.AvsResponse;
 import com.willblaschko.android.alexa.interfaces.GenericSendEvent;
 import com.willblaschko.android.alexa.interfaces.audioplayer.AvsPlayAudioItem;
 import com.willblaschko.android.alexa.interfaces.response.ResponseParser;
+import com.willblaschko.android.alexa.interfaces.speechrecognizer.AvsExpectSpeechItem;
 import com.willblaschko.android.alexa.interfaces.speechrecognizer.SpeechSendAudio;
 import com.willblaschko.android.alexa.interfaces.speechrecognizer.SpeechSendText;
 import com.willblaschko.android.alexa.interfaces.speechrecognizer.SpeechSendVoice;
@@ -63,10 +64,30 @@ public class AlexaManager {
     private boolean mIsRecording = false;
     public Event.EventWrapper activeRecognizeEvent;
     public Event playbackStateEvent;
+    public Event.Initiator initiator; // Initiator information about the interaction.
 
     public void finishedPlayback() {
         playbackStateEvent = null;
     }
+
+    public void updateInitiator(AvsItem _item) {
+        if(_item == null || !(_item instanceof AvsExpectSpeechItem) ) {
+            initiator = null;
+        } else {
+            AvsExpectSpeechItem item = (AvsExpectSpeechItem)_item;
+            if( item.initiator == null ) {
+                initiator = null;
+            } else {
+                Event.Initiator initiator = new Event.Initiator();
+                Event.Payload payload = new Event.Payload();
+                payload.token = item.initiator.payload.token;
+                initiator.type = item.initiator.type;
+                initiator.payload = payload;
+                this.initiator = initiator;
+            }
+        }
+    }
+
     public void  updatePlaybackStateEvent(AvsItem item, String playerActivity) {
         Event.Builder builder = new Event.Builder();
         playbackStateEvent = builder.setHeaderNamespace("AudioPlayer")
@@ -366,7 +387,7 @@ public class AlexaManager {
                                         if( playbackStateEvent != null ) {
                                             context.add(playbackStateEvent);
                                         }
-                                        activeRecognizeEvent = getSpeechSendAudio().sendAudio(url, token, context, requestBody, new AsyncEventHandler(AlexaManager.this, callback));
+                                        activeRecognizeEvent = getSpeechSendAudio().sendAudio(url, token, context, initiator, requestBody, new AsyncEventHandler(AlexaManager.this, callback));
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                         //bubble up the error

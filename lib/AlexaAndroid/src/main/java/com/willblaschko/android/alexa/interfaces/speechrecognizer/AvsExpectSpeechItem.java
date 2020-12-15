@@ -1,5 +1,6 @@
 package com.willblaschko.android.alexa.interfaces.speechrecognizer;
 
+import com.willblaschko.android.alexa.data.Directive;
 import com.willblaschko.android.alexa.interfaces.AvsItem;
 
 /**
@@ -11,15 +12,18 @@ import com.willblaschko.android.alexa.interfaces.AvsItem;
  * @author will on 5/21/2016.
  */
 public class AvsExpectSpeechItem extends AvsItem {
-    long timeoutInMiliseconds;
+    public long timeoutInMiliseconds;
+
+    public Directive.Initiator initiator;
 
     public AvsExpectSpeechItem(){
-        this(null, 2000);
+        this(null, 2000, null);
     }
 
-    public AvsExpectSpeechItem(String token, long timeoutInMiliseconds){
+    public AvsExpectSpeechItem(String token, long timeoutInMiliseconds, Directive.Initiator initiator){
         super(token);
         this.timeoutInMiliseconds = timeoutInMiliseconds;
+        this.initiator = initiator;
     }
 
     public long getTimeoutInMiliseconds() {

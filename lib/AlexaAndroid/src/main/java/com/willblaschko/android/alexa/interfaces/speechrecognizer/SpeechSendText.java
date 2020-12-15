@@ -57,7 +57,7 @@ public class SpeechSendText extends SpeechSendEvent {
 
 
         //call the parent class's prepareConnection() in order to prepare our URL POST
-        prepareConnection(url, accessToken, new ArrayList<Event>());
+        prepareConnection(url, accessToken, new ArrayList<Event>(), null);
 
         //get our VoiceHelper and use an async callback to get the data and send it off to the AVS server via completePost()
         VoiceHelper voiceHelper = VoiceHelper.getInstance(context);

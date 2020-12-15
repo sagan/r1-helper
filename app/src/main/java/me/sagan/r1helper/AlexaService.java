@@ -110,6 +110,8 @@ public class AlexaService extends IntentService {
             instance.avsQueue.clear();
             instance.audioPlayer.stop();
             instance.playbackAudioPlayer.stop();
+            instance.alexaManager.finishedPlayback();
+            instance.alexaManager.updateInitiator(null);
             instance.stopListening();
         }
     }
@@ -201,6 +203,7 @@ public class AlexaService extends IntentService {
             Log.d(TAG, "playback_error " + ( item != null  ? item.getToken() : "null") );
             avsQueue.remove(item);
             playbackAudioPlayer.stop();
+            alexaManager.finishedPlayback();
             return false;
         }
 
@@ -273,12 +276,15 @@ public class AlexaService extends IntentService {
         //if we're out of things, hang up the phone and move on
         if (avsQueue.size() == 0) {
             sendMessage("queue empty");
+            alexaManager.updateInitiator(null);
             playbackAudioPlayer.play();
             return;
         }
 
         AvsItem current = avsQueue.get(0);
         sendMessage("current queue item " + current.getClass().getName());
+
+        alexaManager.updateInitiator(current);
 
         if( current instanceof AvsResponseException) {
             stopAlexaAudio();

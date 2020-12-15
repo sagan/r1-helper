@@ -40,7 +40,7 @@ public abstract class SendEvent {
      * @param url the URL we're posting to, this is either the default {@link com.willblaschko.android.alexa.data.Directive} or {@link com.willblaschko.android.alexa.data.Event} URL
      * @param accessToken the access token of the user who has given consent to the app
      */
-    protected Event.EventWrapper prepareConnection(String url, String accessToken, List<Event> context) {
+    protected Event.EventWrapper prepareConnection(String url, String accessToken, List<Event> context, Event.Initiator initiator) {
 
         //set the request URL
         mRequestBuilder.url(url);
@@ -48,7 +48,7 @@ public abstract class SendEvent {
         //set our authentication access token header
         mRequestBuilder.addHeader("Authorization", "Bearer " + accessToken);
 
-        Event.EventWrapper event = getEventWrapper(context);
+        Event.EventWrapper event = getEventWrapper(context, initiator);
 
         mBodyBuilder = new MultipartBody.Builder()
                 .setType(MultipartBody.FORM)
@@ -113,6 +113,6 @@ public abstract class SendEvent {
     @NotNull
     protected abstract String getEvent();
 
-    protected abstract Event.EventWrapper getEventWrapper(List<Event> context);
+    protected abstract Event.EventWrapper getEventWrapper(List<Event> context, Event.Initiator initiator);
 
 }

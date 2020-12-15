@@ -81,15 +81,23 @@ public class Event {
         }
     }
 
-    public static class Payload{
-        String token;
-        String profile;
-        String format;
-        String playerActivity;
-        Boolean muted;
-        Long volume;
-        Long offsetInMilliseconds;
+    public static class Initiator {
+        public String type;
+        public Payload payload;
+        public Initiator() {}
+    }
 
+    public static class Payload{
+        public String token;
+        public  String profile;
+        public String format;
+        public String playerActivity;
+        public Boolean muted;
+        public Long volume;
+        public Long offsetInMilliseconds;
+        public Initiator initiator;
+
+        public Payload() {}
         public String getProfile() {
             return profile;
         }
@@ -199,6 +207,10 @@ public class Event {
             payload.token = token;
             return this;
         }
+        public Builder setPayloadInitiator(Initiator initiator) {
+            payload.initiator = initiator;
+            return this;
+        }
         public Builder setPlayloadOffsetInMilliseconds(long offsetInMilliseconds){
             payload.offsetInMilliseconds = offsetInMilliseconds;
             return this;
@@ -216,13 +228,14 @@ public class Event {
         return builder.toJson();
     }
 
-    public static EventWrapper getSpeechRecognizerEventWrapper(List<Event> context){
+    public static EventWrapper getSpeechRecognizerEventWrapper(List<Event> context, Initiator initiator){
         Builder builder = new Builder();
         builder.setHeaderNamespace("SpeechRecognizer")
                 .setHeaderName("Recognize")
                 .setHeaderMessageId(getUuid())
                 .setHeaderDialogRequestId(UUID.randomUUID().toString())
                 .setContext(context)
+                .setPayloadInitiator(initiator)
                 .setPayloadFormat("AUDIO_L16_RATE_16000_CHANNELS_1")
                 .setPayloadProfile("NEAR_FIELD");
         return builder.build();

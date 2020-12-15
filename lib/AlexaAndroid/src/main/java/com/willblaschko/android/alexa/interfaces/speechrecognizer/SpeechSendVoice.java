@@ -74,7 +74,7 @@ public class SpeechSendVoice extends SpeechSendEvent {
             @Override
             protected Void doInBackground(Void... params) {
                 synchronized(mLock) {
-                    prepareConnection(url, accessToken, new ArrayList<Event>());
+                    prepareConnection(url, accessToken, new ArrayList<Event>(), null);
                 }
                 return null;
             }

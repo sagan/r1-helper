@@ -19,7 +19,7 @@ public class AvsListenItem extends AvsExpectSpeechItem {
         this(null, 2000);
     }
     public AvsListenItem(String token, long timeoutInMiliseconds) {
-        super(token, timeoutInMiliseconds);
+        super(token, timeoutInMiliseconds, null);
     }
 
 }

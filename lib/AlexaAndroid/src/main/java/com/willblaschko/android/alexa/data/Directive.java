@@ -63,6 +63,12 @@ public class Directive {
         return payload;
     }
 
+    // https://developer.amazon.com/en-US/docs/alexa/alexa-voice-service/speechrecognizer.html#expectspeech
+    public static class Initiator {
+        public String type;
+        public Payload payload; // with only token field
+    }
+
     public static class Header{
         String namespace;
         String name;
@@ -86,19 +92,22 @@ public class Directive {
         }
     }
     public static class Payload{
-        String url;
-        String endpoint;
-        String format;
-        String token;
-        String type;
-        String scheduledTime;
-        String playBehavior;
-        AudioItem audioItem;
-        long volume;
-        boolean mute;
-        long timeoutInMilliseconds;
-        String description;
-        String code;
+        public String url;
+        public String endpoint;
+        public String format;
+        public String token;
+        public String type;
+        public  String scheduledTime;
+        public  String playBehavior;
+        public AudioItem audioItem;
+        public long volume;
+        public boolean mute;
+        public long timeoutInMilliseconds;
+        public  String description;
+        public String code;
+        public Initiator initiator;
+
+        public Initiator getInitiator() {return initiator;}
 
         public String getUrl() {
             return url;

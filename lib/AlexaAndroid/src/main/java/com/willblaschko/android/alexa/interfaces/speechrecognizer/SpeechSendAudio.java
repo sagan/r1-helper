@@ -37,7 +37,7 @@ public class SpeechSendAudio extends SpeechSendEvent {
      * @param callback our event callbacks
      * @throws IOException
      */
-    public Event.EventWrapper sendAudio(final String url, final String accessToken, List<Event> context, @NotNull DataRequestBody requestBody,
+    public Event.EventWrapper sendAudio(final String url, final String accessToken, List<Event> context, Event.Initiator initiator, @NotNull DataRequestBody requestBody,
                                         final AsyncCallback<Call, Exception> callback) throws IOException {
         this.requestBody = requestBody;
         if(callback != null){
@@ -48,7 +48,7 @@ public class SpeechSendAudio extends SpeechSendEvent {
 
         //call the parent class's prepareConnection() in order to prepare our URL POST
         try {
-            Event.EventWrapper event = prepareConnection(url, accessToken, context);
+            Event.EventWrapper event = prepareConnection(url, accessToken, context, initiator);
             final Call response = completePost();
 
             if (callback != null) {

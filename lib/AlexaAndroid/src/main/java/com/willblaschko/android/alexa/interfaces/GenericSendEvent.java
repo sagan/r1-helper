@@ -30,7 +30,7 @@ public class GenericSendEvent extends SendEvent{
             callback.start();
         }
         try {
-            prepareConnection(url, accessToken, new ArrayList<Event>());
+            prepareConnection(url, accessToken, new ArrayList<Event>(), null);
             if (callback != null) {
                 callback.success(completePost());
                 callback.complete();
@@ -52,7 +52,7 @@ public class GenericSendEvent extends SendEvent{
 
     @NotNull
     @Override
-    public Event.EventWrapper getEventWrapper(List<Event> context) {
+    public Event.EventWrapper getEventWrapper(List<Event> context, Event.Initiator initiator) {
        return null;
     }
 
