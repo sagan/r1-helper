@@ -48,6 +48,7 @@ public class DownChannelService extends Service {
     private AndroidSystemHandler handler;
     private Handler runnableHandler;
     private Runnable pingRunnable;
+    private boolean destroyed = false;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -108,6 +109,7 @@ public class DownChannelService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+        destroyed = true;
         Log.d(TAG, "onDestroy");
         if(currentCall != null){
             currentCall.cancel();
@@ -189,12 +191,14 @@ public class DownChannelService extends Service {
                             failCount = Math.min(failCount+1, 6);
                         }
                         Log.d(TAG, "down channel end");
-                        runnableHandler.postDelayed(new Runnable() {
-                            @Override
-                            public void run() {
-                                openDownChannel();
-                            }
-                        }, (int) Math.pow(2, failCount) * 1000);
+                        if( !destroyed ) {
+                            runnableHandler.postDelayed(new Runnable() {
+                                @Override
+                                public void run() {
+                                    openDownChannel();
+                                }
+                            }, (int) Math.pow(2, failCount) * 1000);
+                        }
                     }
                 });
 

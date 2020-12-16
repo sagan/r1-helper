@@ -144,6 +144,8 @@ public class AlexaService extends IntentService {
                 @Override
                 public void onSuccess() {
                     instance.sendMessage("login success");
+                    instance.stopService(new Intent(instance, DownChannelService.class));
+                    instance.startService(new Intent(instance, DownChannelService.class));
                 }
                 @Override
                 public void onError(Exception error) {
@@ -398,11 +400,6 @@ public class AlexaService extends IntentService {
         audioCue.playStartSoundAndSleep();
         recorder.consumeRecordingAndTruncate();
         listeningStartTime = System.currentTimeMillis();
-
-//        Intent stickyIntent = new Intent(this, DownChannelService.class);
-//        startService(stickyIntent);
-//        Log.i(TAG, "Start down channel service.");
-
         stopAlexaAudio();
         playbackAudioPlayer.pause();
         alexaManager.sendAudioRequest(requestBody, requestCallback);

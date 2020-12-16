@@ -7,6 +7,7 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 
 import com.google.gson.Gson;
+import com.willblaschko.android.alexa.AlexaManager;
 import com.willblaschko.android.alexa.audioplayer.AlexaAudioPlayer;
 
 import java.io.IOException;
@@ -123,7 +124,11 @@ public class AppApis {
                     } else {
                         for( Object key : qparms.keySet() ) {
                             if( !Tool.empty(qparms.get(key)) ) {
-                                editor.putString(key.toString(), qparms.get(key).toString());
+                                if( key.toString().equals("recordPausing") ) {
+                                    editor.putInt(key.toString(), Tool.parseInt(qparms.get(key)));
+                                } else {
+                                    editor.putString(key.toString(), qparms.get(key).toString());
+                                }
                             } else {
                                 editor.remove(key.toString());
                             }
@@ -132,7 +137,14 @@ public class AppApis {
                     editor.apply();
                     AlexaService.instance.config();
                 }
-                return gson.toJson(preferences.getAll());
+                Map<String, Object> config = new HashMap<String, Object>(preferences.getAll());
+                if( !config.containsKey("recordPausing") ) {
+                    config.put("recordPausing", 0);
+                }
+                if( !config.containsKey("sensitivity") ) {
+                    config.put("sensitivity", AlexaService.instance.getString(R.string.default_sensitivity));
+                }
+                return gson.toJson(config);
             }
         } catch (Exception e) {}
         return "{}";

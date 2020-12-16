@@ -76,4 +76,15 @@ public class Tool {
         }
         return false;
     }
+
+    public static int parseInt(Object obj) {
+        try {
+            if( obj instanceof String ) {
+                return Integer.parseInt((String) obj);
+            }
+            return (int) obj;
+        } catch(Exception e) {
+            return 0;
+        }
+    }
 }
