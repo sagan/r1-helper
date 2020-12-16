@@ -50,7 +50,7 @@ public class MainActivity extends Activity {
         });
         clearButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                mainText.setText("");
+                mainText.setText(App.log = "");
             }
         });
         loginButton.setOnClickListener(new View.OnClickListener() {

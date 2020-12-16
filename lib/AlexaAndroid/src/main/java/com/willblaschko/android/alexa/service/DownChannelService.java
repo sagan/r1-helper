@@ -184,8 +184,8 @@ public class DownChannelService extends Service {
                                 } catch (IOException e) {
                                     e.printStackTrace();
                                 }
+                                failCount = 0;
                             }
-                            failCount = 0;
                         } catch(Exception e) {
                             Log.d(TAG, "down channel error " + e.getMessage());
                             failCount = Math.min(failCount+1, 6);
