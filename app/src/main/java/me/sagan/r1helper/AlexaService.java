@@ -116,7 +116,7 @@ public class AlexaService extends IntentService {
             });
         }
     }
-    public static void reset() {
+    public static void reset(boolean full) {
         if( instance != null ) {
             instance.alexaManager.cancelAudioRequest();
             instance.checkLogin();
@@ -125,6 +125,10 @@ public class AlexaService extends IntentService {
             instance.playbackAudioPlayer.stop();
             instance.alexaManager.finishedPlayback();
             instance.alexaManager.updateInitiator(null);
+            if( full ) {
+                instance.stopService(new Intent(instance, DownChannelService.class));
+                instance.startService(new Intent(instance, DownChannelService.class));
+            }
             instance.stopListening();
         }
     }
@@ -187,7 +191,7 @@ public class AlexaService extends IntentService {
         @Override
         public void dataError(AvsItem item, Exception e) {
             sendMessage("play data_error " + e.getMessage());
-            reset();
+            reset(false);
         }
     };
 
@@ -225,7 +229,7 @@ public class AlexaService extends IntentService {
         @Override
         public void dataError(AvsItem item, Exception e) {
             Log.d(TAG, "playback_data_error " + e.getMessage());
-            reset();
+            reset(false);
         }
     };
 

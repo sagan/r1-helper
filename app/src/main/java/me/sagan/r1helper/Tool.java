@@ -87,4 +87,21 @@ public class Tool {
             return 0;
         }
     }
+
+    public static boolean truey(String x) {
+        return x != null && x.length() > 0 && !x.equals("0");
+    }
+    public static boolean truey(Object x) {
+        if( x == null )
+            return false;
+        if( x.getClass().equals(String.class) ) {
+            return truey((String)x);
+        } else if( x.getClass().equals(Integer.class) ) {
+            int value = (int)x;
+            return value != 0;
+        } else if( x.getClass().equals(Boolean.class) ) {
+            return (boolean)x;
+        }
+        return true;
+    }
 }

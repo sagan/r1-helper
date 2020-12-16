@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
         });
         resetButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                AlexaService.reset();
+                AlexaService.reset(false);
             }
         });
         enButton.setOnClickListener(new View.OnClickListener() {
