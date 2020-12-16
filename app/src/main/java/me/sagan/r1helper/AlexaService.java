@@ -32,9 +32,14 @@ import com.willblaschko.android.alexa.interfaces.speaker.AvsAdjustVolumeItem;
 import com.willblaschko.android.alexa.interfaces.speaker.AvsSetMuteItem;
 import com.willblaschko.android.alexa.interfaces.speaker.AvsSetVolumeItem;
 import com.willblaschko.android.alexa.interfaces.speechrecognizer.AvsExpectSpeechItem;
+import com.willblaschko.android.alexa.interfaces.speechrecognizer.AvsStopCaptureItem;
 import com.willblaschko.android.alexa.interfaces.speechsynthesizer.AvsSpeakItem;
 import com.willblaschko.android.alexa.requestbody.DataRequestBody;
 import com.willblaschko.android.alexa.service.DownChannelService;
+
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,6 +77,14 @@ public class AlexaService extends IntentService {
     private List<AvsItem> avsQueue = new ArrayList<>();
     public static AlexaService instance;
     private long lastTrimCacheTime = 0;
+    private int recordPausing = 0;
+
+    @Subscribe(threadMode = ThreadMode.BACKGROUND)
+    public void onMessageEvent(AvsItem item) {
+        Log.d(TAG, "receive AvsItem from down channel " + item.getClass().getName());
+        avsQueue.add(item);
+        checkQueue();
+    };
 
     public static void setLanguage(String lang) {
         if( instance != null ) {
@@ -271,7 +284,7 @@ public class AlexaService extends IntentService {
      * We're handling the AvsReplaceAllItem in handleResponse() because it needs to clear everything currently in the queue, before
      * the new items are added to the list, it should have no function here.
      */
-    private void checkQueue() {
+    private synchronized void checkQueue() {
 
         //if we're out of things, hang up the phone and move on
         if (avsQueue.size() == 0) {
@@ -290,6 +303,13 @@ public class AlexaService extends IntentService {
             stopAlexaAudio();
             stopPlaybackAudio();
             avsQueue.clear();
+        } else if ( current instanceof AvsStopCaptureItem) {
+            Event.EventWrapper event = alexaManager.activeRecognizeEvent;
+            AvsStopCaptureItem asi = (AvsStopCaptureItem) current;
+            if( event != null && event.getEvent().getHeader().getDialogRequestId().equals(asi.dialogRequestId) ) {
+                recorder.stop();
+            }
+            avsQueue.remove(current);
         } else if (current instanceof AvsPlayRemoteItem) {
             //play a URL
             stopAlexaAudio();
@@ -416,15 +436,19 @@ public class AlexaService extends IntentService {
                     Log.d(TAG, "recorder error");
                     break;
                 }
-                if( passedTime > 10000 ) {
-                    Log.d(TAG, "passed 10 seconds");
+                if( recorder.getState() == AudioRecorder.State.STOPPED ) {
+                    Log.d(TAG, "recorder stopped");
                     break;
                 }
-                if( recorder.isPausing() && passedTime > 1500 ) {
+                if( passedTime > 30000 ) {
+                    Log.d(TAG, "recorder timeout");
+                    break;
+                }
+                if( recordPausing > 0 && recorder.isPausing() && passedTime > recordPausing ) {
                     Log.d(TAG, "recorder isPausing");
                     break;
                 }
-                final float rmsdb = recorder.getRmsdb();
+//                final float rmsdb = recorder.getRmsdb();
 //                Log.d(TAG, " passed Time " + passedTime + " ; rmsdb " + rmsdb);
                 // update UI rmsdb level
                 if(sink != null && recorder != null) {
@@ -502,6 +526,7 @@ public class AlexaService extends IntentService {
         audioPlayer.addCallback(alexaAudioPlayerCallback);
         playbackAudioPlayer.addCallback(playbackAudioPlayerCallback);
         audioPlayer.context = this;
+        EventBus.getDefault().register(this);
 
         SnowboyUtils.copyAssets(this);
         File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
@@ -513,6 +538,7 @@ public class AlexaService extends IntentService {
     }
 
     public void config() {
+        recordPausing = preferences.getInt("recordPausing",0);
         //sensitivity: [0,1], Increasing the value lead to better detection rate, but also higher false alarm rate.
         String sensitivity = preferences.getString("sensitivity", getString(R.string.default_sensitivity));
         sendMessage("Set snowboy sensitivity to " + sensitivity);
@@ -540,6 +566,7 @@ public class AlexaService extends IntentService {
 
     public void onDestroy() {
         running = false;
+        EventBus.getDefault().unregister(this);
         Log.d(TAG, "onDestroy");
         stopForeground(true);
         snowboyDetect.delete();

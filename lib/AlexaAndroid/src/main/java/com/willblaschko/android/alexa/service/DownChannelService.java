@@ -22,6 +22,8 @@ import com.willblaschko.android.alexa.system.AndroidSystemHandler;
 import org.greenrobot.eventbus.EventBus;
 
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -38,6 +40,8 @@ import okio.BufferedSource;
 public class DownChannelService extends Service {
 
     private static final String TAG = "DownChannelService";
+
+    private static final Pattern multipartBoundaryPattern = Pattern.compile(";\\s*boundary=([^;]+);");
 
     private AlexaManager alexaManager;
     private Call currentCall;
@@ -135,21 +139,29 @@ public class DownChannelService extends Service {
 
                     @Override
                     public void onResponse(Call call, Response response) throws IOException {
-                        Log.d(TAG, "downchannel response start " + response.header("content-type"));
-                        alexaManager.sendEvent(Event.getSynchronizeStateEvent(), new ImplAsyncCallback<AvsResponse, Exception>() {
-                            @Override
-                            public void success(AvsResponse result) {
-                                handler.handleItems(result);
-                                runnableHandler.post(pingRunnable);
-                            }
-                        });
-
+                        int failCount = 0;
                         // HTTP/2 half-open long connection
                         // Content-Type: multipart/related; boundary=------abcde123; type=application/json
                         try {
+                            Matcher matcher = multipartBoundaryPattern.matcher(response.header("content-type"));
+                            if( !matcher.find() ) {
+                                throw new Exception("response content-type not valid: " + (
+                                        response.header("content-type") != null ? response.header("content-type") : "null")
+                                );
+                            }
+                            String boundary = matcher.group(1);
+                            Log.d(TAG, "downchannel response start boundary " + boundary);
+
+                            alexaManager.sendEvent(Event.getSynchronizeStateEvent(), new ImplAsyncCallback<AvsResponse, Exception>() {
+                                @Override
+                                public void success(AvsResponse result) {
+                                    handler.handleItems(result);
+                                    runnableHandler.post(pingRunnable);
+                                }
+                            });
                             ResponseBody body = response.body();
 //                            Log.d(TAG, ":--" + body.contentType().toString());
-                            MultipartReader multipartReader = new MultipartReader(body.source(), "------abcde123");
+                            MultipartReader multipartReader = new MultipartReader(body.source(), boundary);
                             while(true) {
                                 Log.d(TAG, "reading downchannel stream");
                                 MultipartReader.Part part = multipartReader.nextPart();
@@ -162,26 +174,27 @@ public class DownChannelService extends Service {
                                     line += bufferedSource.readUtf8();
                                 }
                                 Log.d(TAG, "--- "  + line);
+                                Directive directive = ResponseParser.getDirective(line);
+                                handler.handleDirective(directive);
                                 try {
-                                    Directive directive = ResponseParser.getDirective(line);
-                                    handler.handleDirective(directive);
-                                    //surface to our UI if it's up
-                                    try {
-                                        AvsItem item = ResponseParser.parseDirective(directive);
-                                        EventBus.getDefault().post(item);
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
-                                    }
-                                } catch (Exception e) {
-                                    Log.e(TAG, "Bad line");
+                                    AvsItem item = ResponseParser.parseDirective(directive);
+                                    EventBus.getDefault().post(item);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
                                 }
                             }
+                            failCount = 0;
                         } catch(Exception e) {
                             Log.d(TAG, "down channel error " + e.getMessage());
+                            failCount = Math.min(failCount+1, 6);
                         }
                         Log.d(TAG, "down channel end");
-                        SystemClock.sleep(5000);
-                        openDownChannel();
+                        runnableHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                openDownChannel();
+                            }
+                        }, (int) Math.pow(2, failCount) * 1000);
                     }
                 });
 

@@ -7,7 +7,9 @@ import com.willblaschko.android.alexa.interfaces.AvsItem;
  */
 
 public class AvsStopCaptureItem extends AvsItem {
-    public AvsStopCaptureItem(String token) {
+    public String dialogRequestId;
+    public AvsStopCaptureItem(String token, String dialogRequestId) {
         super(token);
+        this.dialogRequestId = dialogRequestId;
     }
 }

@@ -197,7 +197,7 @@ public class ResponseParser {
                     return new AvsPlayRemoteItem(directive.getPayload().getToken(), url, directive.getPayload().getAudioItem().getStream().getOffsetInMilliseconds());
                 }
             case Directive.TYPE_STOP_CAPTURE:
-                return new AvsStopCaptureItem(directive.getPayload().getToken());
+                return new AvsStopCaptureItem(directive.getPayload().getToken(), directive.getHeader().getDialogRequestId());
             case Directive.TYPE_STOP:
                 return new AvsStopItem(directive.getPayload().getToken());
             case Directive.TYPE_SET_ALERT:

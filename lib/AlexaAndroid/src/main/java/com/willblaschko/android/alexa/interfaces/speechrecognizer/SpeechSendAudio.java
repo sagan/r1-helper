@@ -2,6 +2,7 @@ package com.willblaschko.android.alexa.interfaces.speechrecognizer;
 
 import android.util.Log;
 
+import com.willblaschko.android.alexa.AlexaManager;
 import com.willblaschko.android.alexa.callbacks.AsyncCallback;
 import com.willblaschko.android.alexa.data.Event;
 import com.willblaschko.android.alexa.interfaces.AvsException;
@@ -37,7 +38,7 @@ public class SpeechSendAudio extends SpeechSendEvent {
      * @param callback our event callbacks
      * @throws IOException
      */
-    public Event.EventWrapper sendAudio(final String url, final String accessToken, List<Event> context, Event.Initiator initiator, @NotNull DataRequestBody requestBody,
+    public void sendAudio(final String url, final String accessToken, List<Event> context, Event.Initiator initiator, @NotNull DataRequestBody requestBody,
                                         final AsyncCallback<Call, Exception> callback) throws IOException {
         this.requestBody = requestBody;
         if(callback != null){
@@ -48,7 +49,8 @@ public class SpeechSendAudio extends SpeechSendEvent {
 
         //call the parent class's prepareConnection() in order to prepare our URL POST
         try {
-            Event.EventWrapper event = prepareConnection(url, accessToken, context, initiator);
+            AlexaManager.getInstance().activeRecognizeEvent = prepareConnection(url, accessToken, context, initiator);
+
             final Call response = completePost();
 
             if (callback != null) {
@@ -60,10 +62,8 @@ public class SpeechSendAudio extends SpeechSendEvent {
 
             Log.i(TAG, "Audio sent");
             Log.i(TAG, "Audio sending process took: " + (System.currentTimeMillis() - start));
-            return event;
         } catch (IOException|AvsException e) {
             onError(callback, e);
-            return null;
         }
     }
 

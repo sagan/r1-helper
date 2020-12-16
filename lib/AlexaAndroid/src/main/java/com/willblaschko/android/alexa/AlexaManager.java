@@ -116,6 +116,7 @@ public class AlexaManager {
         }
     }
 
+    public static AlexaManager getInstance() {return mInstance;}
     /**
      * Return an instance of AlexaManager
      *
@@ -387,7 +388,7 @@ public class AlexaManager {
                                         if( playbackStateEvent != null ) {
                                             context.add(playbackStateEvent);
                                         }
-                                        activeRecognizeEvent = getSpeechSendAudio().sendAudio(url, token, context, initiator, requestBody, new AsyncEventHandler(AlexaManager.this, callback));
+                                        getSpeechSendAudio().sendAudio(url, token, context, initiator, requestBody, new AsyncEventHandler(AlexaManager.this, callback));
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                         //bubble up the error
