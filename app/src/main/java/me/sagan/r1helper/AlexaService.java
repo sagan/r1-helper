@@ -4,8 +4,11 @@ import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.os.SystemClock;
+import android.os.health.SystemHealthManager;
 import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
@@ -53,6 +56,7 @@ import ai.kitt.snowboy.SnowboyDetect;
 import ee.ioc.phon.android.speechutils.AudioCue;
 import ee.ioc.phon.android.speechutils.AudioRecorder;
 import ee.ioc.phon.android.speechutils.RawAudioRecorder;
+import ee.ioc.phon.android.speechutils.SpeechRecord;
 import okio.BufferedSink;
 
 public class AlexaService extends IntentService {
@@ -135,6 +139,32 @@ public class AlexaService extends IntentService {
     public static void trigger() {
         if( instance != null ) {
             instance.startListening();
+        }
+    }
+
+    public static void test2(int audioSource, int sampleRate, short channels) {
+        if( instance != null ) {
+            instance.stopListening();
+            instance.recorder.stop();
+            instance.recorder.release();
+            try {
+                instance.sendMessage("Test audio record audioSource " + audioSource
+                        + " " + " sampleRate" + sampleRate
+                        + " channels " + channels);
+                RawAudioRecorder recorder = new RawAudioRecorder(audioSource, sampleRate, channels);
+
+                AudioRecord ar = new AudioRecord(audioSource, sampleRate,
+                        channels > 1 ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO,
+                        AudioFormat.ENCODING_PCM_16BIT, 10000);
+                ar.startRecording();
+                SystemClock.sleep(50);
+                ar.startRecording();
+                ar.release();
+                instance.sendMessage("Test audio record ok");
+            } catch(Exception e) {
+                instance.sendMessage("Test audio record error " + e.getMessage());
+            }
+            reset(false);
         }
     }
 

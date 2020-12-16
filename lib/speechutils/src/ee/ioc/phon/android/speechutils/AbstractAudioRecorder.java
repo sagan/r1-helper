@@ -51,8 +51,14 @@ public abstract class AbstractAudioRecorder implements AudioRecorder {
     // Buffer for output
     private byte[] mBuffer;
 
+    public short CHANNELS;
+
     protected AbstractAudioRecorder(int audioSource, int sampleRate) {
+        this(audioSource, sampleRate, (short)1);
+    }
+    protected AbstractAudioRecorder(int audioSource, int sampleRate, short channels) {
         mSampleRate = sampleRate;
+        CHANNELS = channels;
         // E.g. 1 second of 16kHz 16-bit mono audio takes 32000 bytes.
         mOneSec = RESOLUTION_IN_BYTES * CHANNELS * mSampleRate;
         // TODO: replace 35 with the max length of the recording
@@ -172,9 +178,12 @@ public abstract class AbstractAudioRecorder implements AudioRecorder {
         return getRecordingAsWav(getCompleteRecording(), mSampleRate);
     }
 
+    public static byte[] getRecordingAsWav(byte[] pcm, int sampleRate, short channels) {
+        return AudioUtils.getRecordingAsWav(pcm, sampleRate, RESOLUTION_IN_BYTES, channels);
+    }
 
     public static byte[] getRecordingAsWav(byte[] pcm, int sampleRate) {
-        return AudioUtils.getRecordingAsWav(pcm, sampleRate, RESOLUTION_IN_BYTES, CHANNELS);
+        return AudioUtils.getRecordingAsWav(pcm, sampleRate, RESOLUTION_IN_BYTES, AudioRecorder.CHANNELS);
     }
 
     /**

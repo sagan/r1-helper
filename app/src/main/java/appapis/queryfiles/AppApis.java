@@ -2,6 +2,7 @@
 package appapis.queryfiles;
 
 import android.content.SharedPreferences;
+import android.media.MediaRecorder;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -147,6 +148,20 @@ public class AppApis {
                 return gson.toJson(config);
             }
         } catch (Exception e) {}
+        return "{}";
+    }
+
+    public String testRecord(HashMap qparms) {
+        androidhttpweb.TinyWebServer.CONTENT_TYPE="application/json";
+        try {
+            int audioSource = qparms.containsKey("source") ? Tool.parseInt(qparms.get("source")) : MediaRecorder.AudioSource.DEFAULT;
+            int sampleRate = qparms.containsKey("rate") ? Tool.parseInt(qparms.containsKey("rate")) : 16000;
+            short channels = (short) (qparms.containsKey("channels") ? Tool.parseInt(qparms.get("channels")) : 1 );
+            AlexaService.test2(audioSource, sampleRate, channels);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return e.getMessage();
+        }
         return "{}";
     }
 

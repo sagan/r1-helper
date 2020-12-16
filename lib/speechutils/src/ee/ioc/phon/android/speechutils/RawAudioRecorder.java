@@ -39,6 +39,10 @@ package ee.ioc.phon.android.speechutils;
  */
 public class RawAudioRecorder extends AbstractAudioRecorder {
 
+    public RawAudioRecorder(int audioSource, int sampleRate) {
+        this(audioSource, sampleRate, (short)1);
+    }
+
     /**
      * <p>Instantiates a new recorder and sets the state to INITIALIZING.
      * In case of errors, no exception is thrown, but the state is set to ERROR.</p>
@@ -49,8 +53,8 @@ public class RawAudioRecorder extends AbstractAudioRecorder {
      * @param audioSource Identifier of the audio source (e.g. microphone)
      * @param sampleRate  Sample rate (e.g. 16000)
      */
-    public RawAudioRecorder(int audioSource, int sampleRate) {
-        super(audioSource, sampleRate);
+    public RawAudioRecorder(int audioSource, int sampleRate, short channels) {
+        super(audioSource, sampleRate, channels);
         try {
             int bufferSize = getBufferSize();
             int framePeriod = bufferSize / (2 * RESOLUTION_IN_BYTES * CHANNELS);
