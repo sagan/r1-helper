@@ -142,20 +142,18 @@ public class AlexaService extends IntentService {
         }
     }
 
-    public static void test2(int audioSource, int sampleRate, short channels) {
+    public static void test2(int audioSource, int sampleRate, int audioFormat, int channel) {
         if( instance != null ) {
             instance.stopListening();
             instance.recorder.stop();
             instance.recorder.release();
             try {
                 instance.sendMessage("Test audio record audioSource " + audioSource
-                        + " " + " sampleRate" + sampleRate
-                        + " channels " + channels);
-                RawAudioRecorder recorder = new RawAudioRecorder(audioSource, sampleRate, channels);
-
-                AudioRecord ar = new AudioRecord(audioSource, sampleRate,
-                        channels > 1 ? AudioFormat.CHANNEL_IN_STEREO : AudioFormat.CHANNEL_IN_MONO,
-                        AudioFormat.ENCODING_PCM_16BIT, 10000);
+                        + " sampleRate " + sampleRate
+                        + " audioFormat " + audioFormat
+                        + " channel " + channel
+                );
+                AudioRecord ar = new AudioRecord(audioSource, sampleRate, channel, audioFormat, 10000);
                 ar.startRecording();
                 SystemClock.sleep(50);
                 ar.startRecording();

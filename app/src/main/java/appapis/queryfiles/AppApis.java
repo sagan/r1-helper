@@ -2,6 +2,8 @@
 package appapis.queryfiles;
 
 import android.content.SharedPreferences;
+import android.media.AudioFormat;
+import android.media.AudioRecord;
 import android.media.MediaRecorder;
 import android.media.audiofx.AcousticEchoCanceler;
 import android.preference.PreferenceManager;
@@ -155,9 +157,10 @@ public class AppApis {
         androidhttpweb.TinyWebServer.CONTENT_TYPE="application/json";
         try {
             int audioSource = qparms.containsKey("source") ? Tool.parseInt(qparms.get("source")) : MediaRecorder.AudioSource.DEFAULT;
-            int sampleRate = qparms.containsKey("rate") ? Tool.parseInt(qparms.containsKey("rate")) : 16000;
-            short channels = (short) (qparms.containsKey("channels") ? Tool.parseInt(qparms.get("channels")) : 1 );
-            AlexaService.test2(audioSource, sampleRate, channels);
+            int sampleRate = qparms.containsKey("rate") ? Tool.parseInt(qparms.get("rate")) : 16000;
+            int format = qparms.containsKey("format") ? Tool.parseInt(qparms.get("format")) : AudioFormat.ENCODING_PCM_16BIT;
+            int channel = qparms.containsKey("channel") ? Tool.parseInt(qparms.get("channel")) : AudioFormat.CHANNEL_IN_DEFAULT;
+            AlexaService.test2(audioSource, sampleRate, format, channel);
         } catch (Exception e) {
             e.printStackTrace();
             return e.getMessage();
