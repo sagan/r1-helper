@@ -72,7 +72,7 @@ adb shell /system/bin/am start -n me.sagan.r1helper/.MainActivity
 
 使用 Alexa 语音助手前，需要在 R1 设备上登录 amazon 帐号。首先还需要在 R1 上安装任意一个浏览器，测试用 [Google Chrome 46.0.2490.76 (arm-v7a)](https://www.apkmirror.com/apk/google-inc/chrome/chrome-46-0-2490-76-release/chrome-46-0-2490-76-android-5-0-android-apk-download/) 可以。然后用 adb 投屏工具（如 [scrcpy](https://github.com/Genymobile/scrcpy)）连接 R1，启动本程序，点击 "LOGIN" 按钮，然后在打开的浏览器里登录 amazon 帐号并授权本应用即可。
 
-使用 "Alexa" ([读音](https://www.youtube.com/watch?v=U9N1xpcWwD0)) 唤醒语音助手。如果想修改唤醒词，可以尝试在 snowboy 网站上生成自己的唤醒词语音模型，然后放到 R1 设备上替换 /sdcard/r1helper/alexa.umdl 文件。修改后需要彻底停止本 app 然后重新启动以生效：
+使用 "Alexa" ([读音](https://www.youtube.com/watch?v=U9N1xpcWwD0)) 唤醒语音助手。如果想修改唤醒词，可以尝试在 snowboy 网站上生成自己的唤醒词语音模型，放到 R1 设备上 /sdcard/r1helper/ 目录下，然后修改本 app 的 snowboy_model 配置为你的模型文件名（参考下文）。
 
 ```
 adb shell am force-stop me.sagan.r1helper
@@ -126,6 +126,7 @@ HTTP API 列表：
 * GET /config?sensitivity=0.3 : 获取或修改 app (持久化)首选项参数。可选参数：
     * sensitivity : 语音助手唤醒词识别敏感度。范围 [0,1]。数值越大则越容易唤醒，但误唤醒率也会更高。
     * recordPausing : 毫秒数。> 0 则启用录音时本地语音结束检测（录音至少需已开始这么长时间才可能结束）。不推荐。Alexa服务器云端会自动检测语音结束。
+    * snowboy_model : 唤醒词检测使用的 snowboy 模型文件名。默认为 alexa.umdl。模型文件存放路径 /sdcard/r1helper。
     * setpassword : 设置 HTTP API 的密码。
 * GET /reset : 重置 Alexa 语音助手状态。如果语音助手一直没反应或不听使唤，可以尝试重置。可选参数 full=1 彻底重启 alexa 所有服务。
 

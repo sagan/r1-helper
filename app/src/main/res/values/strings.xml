@@ -2,5 +2,6 @@
     <string name="app_name">R1Helper</string>
     <string name="alexa_product_id">r1assistant</string>
     <string name="title_activity_one_piexl">OnePiexlActivity</string>
-    <string name="default_sensitivity">0.30</string>
+    <string name="default_sensitivity">0.6</string>
+    <string name="default_snowboy_model">alexa2.umdl</string>
 </resources>

@@ -556,21 +556,25 @@ public class AlexaService extends IntentService {
         playbackAudioPlayer.addCallback(playbackAudioPlayerCallback);
         audioPlayer.context = this;
         EventBus.getDefault().register(this);
-
         SnowboyUtils.copyAssets(this);
-        File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
-        File model = new File(snowboyDirectory, "alexa.umdl");
-        File common = new File(snowboyDirectory, "common.res");
-        snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
         config();
         instance = this;
     }
 
     public void config() {
+        if( snowboyDetect != null ) {
+            snowboyDetect.delete();
+            snowboyDetect = null;
+        }
+        File snowboyDirectory = SnowboyUtils.getSnowboyDirectory();
+        String modelName = preferences.getString("snowboy_model", getString(R.string.default_snowboy_model));
+        String sensitivity = preferences.getString("sensitivity", getString(R.string.default_sensitivity));
+        File model = new File(snowboyDirectory, modelName);
+        File common = new File(snowboyDirectory, "common.res");
+        snowboyDetect = new SnowboyDetect(common.getAbsolutePath(), model.getAbsolutePath());
         recordPausing = preferences.getInt("recordPausing",0);
         //sensitivity: [0,1], Increasing the value lead to better detection rate, but also higher false alarm rate.
-        String sensitivity = preferences.getString("sensitivity", getString(R.string.default_sensitivity));
-        sendMessage("Set snowboy sensitivity to " + sensitivity);
+        sendMessage("Set snowboy model to " + modelName + ", sensitivity to " + sensitivity);
         snowboyDetect.setSensitivity(sensitivity);
         snowboyDetect.applyFrontend(true);
     }

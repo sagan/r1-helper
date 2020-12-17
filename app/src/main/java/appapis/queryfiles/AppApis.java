@@ -50,8 +50,9 @@ public class AppApis {
                 "    * mode : 更改 app 运行模式。mode 值：0 - 正常模式(显示 LED 灯和氛围灯效果); 1 - 关闭 LED 灯; 2 - 蓝牙配对模式 (LED灯交替闪烁蓝、白色)。\n" +
                 "* GET /config?sensitivity=0.3 : 获取或修改 app (持久化)首选项参数。可选参数：\n" +
                 "    * sensitivity : 语音助手唤醒词识别敏感度。范围 [0,1]。数值越大则越容易唤醒，但误唤醒率也会更高。\n" +
-                "    * setpassword : 设置 HTTP API 的密码。\n" +
                 "    * recordPausing : 毫秒数。> 0 则启用录音时本地语音结束检测（录音至少需已开始这么长时间才可能结束）。不推荐。Alexa服务器云端会自动检测语音结束。\n" +
+                "    * snowboy_model : 唤醒词检测使用的 snowboy 模型文件名。默认为 alexa.umdl。模型文件存放路径 /sdcard/r1helper。" +
+                "    * setpassword : 设置 HTTP API 的密码。\n" +
                 "* GET /reset : 重置 Alexa 语音助手状态。如果语音助手一直没反应或不听使唤，可以尝试重置。可选参数 full=1 彻底重启 alexa 所有服务。\n" +
                 "\n" +
                 "HTTP API 默认无需验证，使用 GET /config?setpassword=123 接口可以设置密码。设置密码以后，以上所有 API 访问时都必须带上 password 参数提供当前密码。";
@@ -146,6 +147,9 @@ public class AppApis {
                 }
                 if( !config.containsKey("sensitivity") ) {
                     config.put("sensitivity", AlexaService.instance.getString(R.string.default_sensitivity));
+                }
+                if( !config.containsKey("snowboy_model") ) {
+                    config.put("snowboy_model", AlexaService.instance.getString(R.string.default_snowboy_model));
                 }
                 return gson.toJson(config);
             }
