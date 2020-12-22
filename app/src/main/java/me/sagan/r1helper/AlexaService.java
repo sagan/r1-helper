@@ -130,6 +130,7 @@ public class AlexaService extends IntentService {
             instance.alexaManager.finishedPlayback();
             instance.alexaManager.updateInitiator(null);
             if( full ) {
+                instance.config();
                 instance.stopService(new Intent(instance, DownChannelService.class));
                 instance.startService(new Intent(instance, DownChannelService.class));
             }
