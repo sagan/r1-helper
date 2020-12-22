@@ -52,7 +52,8 @@ public class AudioCue {
         if (mp == null) {
             return false;
         }
-        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+// no effect, MediaPlayer.create return a prepared mp, which will ignore setAudioStreamType
+//        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {

@@ -211,8 +211,6 @@ public class AlexaService extends IntentService {
         @Override
         public boolean playerError(AvsItem item, int what, int extra) {
             sendMessage("play error " +  ( item != null  ? item.getToken() : "null") );
-            avsQueue.remove(item);
-            audioPlayer.stop();
             return false;
         }
 
@@ -248,9 +246,6 @@ public class AlexaService extends IntentService {
         @Override
         public boolean playerError(AvsItem item, int what, int extra) {
             Log.d(TAG, "playback_error " + ( item != null  ? item.getToken() : "null") );
-            avsQueue.remove(item);
-            playbackAudioPlayer.stop();
-            alexaManager.finishedPlayback();
             return false;
         }
 
