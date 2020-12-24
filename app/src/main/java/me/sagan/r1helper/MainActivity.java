@@ -60,7 +60,7 @@ public class MainActivity extends Activity {
         });
         resetButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                AlexaService.reset(false);
+                AlexaService.reset(true);
             }
         });
         enButton.setOnClickListener(new View.OnClickListener() {
@@ -99,7 +99,9 @@ public class MainActivity extends Activity {
                 receiver = new MessageReceiver();
             }
             Log.d("AlexaService", "onResume register receiver");
-            registerReceiver(receiver, new IntentFilter("me.sagan.r1helper.action.REFRESH"));
+            IntentFilter intentFilter = new IntentFilter("me.sagan.r1helper.action.REFRESH");
+            intentFilter.addAction("me.sagan.r1helper.action.MESSAGE");
+            registerReceiver(receiver, intentFilter);
             receiverRegistered = true;
         }
         Intent intent = new Intent("me.sagan.r1helper.start");
@@ -151,6 +153,9 @@ public class MainActivity extends Activity {
         @Override
         public void onReceive(Context context, Intent intent) {
             if (intent.getAction().equals("me.sagan.r1helper.action.REFRESH")) {
+                refresh();
+            } else if (intent.getAction().equals("me.sagan.r1helper.action.MESSAGE")) {
+                Tool.addLog(null, intent.getStringExtra("content"));
                 refresh();
             }
         }

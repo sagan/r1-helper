@@ -1,6 +1,7 @@
 package ee.ioc.phon.android.speechutils;
 
 import android.content.Context;
+import android.content.Intent;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.os.SystemClock;
@@ -47,21 +48,42 @@ public class AudioCue {
 
 
     private boolean playSound(int sound) {
-        MediaPlayer mp = MediaPlayer.create(mContext, sound);
+        final MediaPlayer mp = MediaPlayer.create(mContext, sound);
         // create can return null, e.g. on Android Wear
         if (mp == null) {
+//            sendMessage("audio cue fail create player " + sound);
             return false;
         }
-// no effect, MediaPlayer.create return a prepared mp, which will ignore setAudioStreamType
-//        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        // no effect?, MediaPlayer.create return a mp with prepare() called, which will ignore setAudioStreamType
+        mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
+//                sendMessage("audio cue play complete " + sound);
                 mp.release();
             }
         });
-        mp.start();
+        mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+            @Override
+            public boolean onError(MediaPlayer mp, int what, int extra) {
+//                sendMessage("audio cue play error " + sound + ", " + what + " " + extra);
+                return false;
+            }
+        });
+        mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+            @Override
+            public void onPrepared(MediaPlayer mp) {
+//                sendMessage("audio cue start play " + sound);
+                mp.start();
+            }
+        });
         return true;
     }
 
+    private void sendMessage(String content) {
+        Intent intent = new Intent();
+        intent.setAction("me.sagan.r1helper.action.MESSAGE");
+        intent.putExtra( "content",content);
+        mContext.sendBroadcast(intent);
+    }
 }
