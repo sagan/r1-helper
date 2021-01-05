@@ -67,6 +67,7 @@ public class AlexaService extends IntentService {
     public static boolean running = false;
     public int isLogin = 0;
     public static boolean enteredIdle = false;
+    public static boolean working = false;
     public static boolean listening = false; // alexa is listening voice;
     public long listeningStartTime = 0;
     public static boolean playing = false;
@@ -324,101 +325,112 @@ public class AlexaService extends IntentService {
             return;
         }
 
-        AvsItem current = avsQueue.get(0);
-        sendMessage("current queue item " + current.getClass().getName());
 
-        alexaManager.updateInitiator(current);
+        while( true ) {
+            if( avsQueue.size() == 0 ) {
+                break;
+            }
+            AvsItem current = avsQueue.get(0);
+            sendMessage("process queue item " + current.getClass().getName());
+            alexaManager.updateInitiator(current);
 
-        if( current instanceof AvsResponseException) {
-            stopAlexaAudio();
-            stopPlaybackAudio();
-            avsQueue.clear();
-        } else if ( current instanceof AvsStopCaptureItem) {
-            Event.EventWrapper event = alexaManager.activeRecognizeEvent;
-            AvsStopCaptureItem asi = (AvsStopCaptureItem) current;
-            if( event != null && event.getEvent().getHeader().getDialogRequestId().equals(asi.dialogRequestId) ) {
-                recorder.stop();
-            }
-            avsQueue.remove(current);
-        } else if (current instanceof AvsPlayRemoteItem) {
-            //play a URL
-            stopAlexaAudio();
-            alexaManager.updatePlaybackStateEvent(current, "PLAYING");
-            if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current ) {
-                AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
-                if( currentItem != null ) {
-                    avsQueue.remove(currentItem);
+            if( current instanceof AvsResponseException) {
+                stopAlexaAudio();
+                stopPlaybackAudio();
+                avsQueue.clear();
+            } else if ( current instanceof AvsStopCaptureItem) {
+                Event.EventWrapper event = alexaManager.activeRecognizeEvent;
+                AvsStopCaptureItem asi = (AvsStopCaptureItem) current;
+                if( event != null && event.getEvent().getHeader().getDialogRequestId().equals(asi.dialogRequestId) ) {
+                    recorder.stop();
                 }
-                playbackAudioPlayer.playItem((AvsPlayRemoteItem) current);
-            } else {
-                playbackAudioPlayer.play();
-            }
-        } else if (current instanceof AvsPlayContentItem) {
-            //play a URL
-            stopAlexaAudio();
-            alexaManager.updatePlaybackStateEvent(current, "PLAYING");
-            if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current) {
-                AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
-                if( currentItem != null ) {
-                    avsQueue.remove(currentItem);
+                avsQueue.remove(current);
+            } else if (current instanceof AvsPlayRemoteItem) {
+                //play a URL
+                stopAlexaAudio();
+                alexaManager.updatePlaybackStateEvent(current, "PLAYING");
+                if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current ) {
+                    AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
+                    if( currentItem != null ) {
+                        avsQueue.remove(currentItem);
+                    }
+                    playbackAudioPlayer.playItem((AvsPlayRemoteItem) current);
+                } else {
+                    playbackAudioPlayer.play();
                 }
-                playbackAudioPlayer.playItem((AvsPlayContentItem) current);
-            } else {
-                playbackAudioPlayer.play();
-            }
-        } else if (current instanceof AvsSpeakItem) {
-            //play a sound file
-            playbackAudioPlayer.pause();
-            if (!audioPlayer.isPlaying() || audioPlayer.getCurrentItem() != current) {
-                AvsItem currentItem = audioPlayer.getCurrentItem();
-                if( currentItem != null ) {
-                    avsQueue.remove(currentItem);
+                break;
+            } else if (current instanceof AvsPlayContentItem) {
+                //play a URL
+                stopAlexaAudio();
+                alexaManager.updatePlaybackStateEvent(current, "PLAYING");
+                if (!playbackAudioPlayer.isPlaying() || playbackAudioPlayer.getCurrentItem() != current) {
+                    AvsItem currentItem = playbackAudioPlayer.getCurrentItem();
+                    if( currentItem != null ) {
+                        avsQueue.remove(currentItem);
+                    }
+                    playbackAudioPlayer.playItem((AvsPlayContentItem) current);
+                } else {
+                    playbackAudioPlayer.play();
                 }
-                audioPlayer.playItem((AvsSpeakItem) current);
-            } else {
-                audioPlayer.play();
+                break;
+            } else if (current instanceof AvsSpeakItem) {
+                //play a sound file
+                playbackAudioPlayer.pause();
+                if (!audioPlayer.isPlaying() || audioPlayer.getCurrentItem() != current) {
+                    AvsItem currentItem = audioPlayer.getCurrentItem();
+                    if( currentItem != null ) {
+                        avsQueue.remove(currentItem);
+                    }
+                    audioPlayer.playItem((AvsSpeakItem) current);
+                } else {
+                    audioPlayer.play();
+                }
+                break;
+            } else if (current instanceof AvsStopItem) {
+                //stop our play
+                stopAlexaAudio();
+                stopPlaybackAudio();
+                avsQueue.remove(current);
+            } else if (current instanceof AvsReplaceAllItem) {
+                stopAlexaAudio();
+                stopPlaybackAudio();
+                avsQueue.remove(current);
+            } else if (current instanceof AvsReplaceEnqueuedItem) {
+                avsQueue.remove(current);
+            } else if (current instanceof AvsExpectSpeechItem) {
+                //listen for user input
+                stopAlexaAudio();
+                playbackAudioPlayer.pause();
+                avsQueue.remove(current);
+//              avsQueue.clear();
+                startListening();
+            } else if (current instanceof AvsSetVolumeItem) {
+                setVolume(((AvsSetVolumeItem) current).getVolume());
+                avsQueue.remove(current);
+            } else if(current instanceof AvsAdjustVolumeItem){
+                adjustVolume(((AvsAdjustVolumeItem) current).getAdjustment());
+                avsQueue.remove(current);
+            } else if(current instanceof AvsSetMuteItem){
+                setMute(((AvsSetMuteItem) current).isMute());
+                avsQueue.remove(current);
+            }else if(current instanceof AvsMediaPlayCommandItem){
+                //fake a hardware "play" press
+                sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_PLAY);
+                avsQueue.remove(current);
+            }else if(current instanceof AvsMediaPauseCommandItem){
+                //fake a hardware "pause" press
+                sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_PAUSE);
+                avsQueue.remove(current);
+            }else if(current instanceof AvsMediaNextCommandItem){
+                //fake a hardware "next" press
+                sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_NEXT);
+                avsQueue.remove(current);
+            }else if(current instanceof AvsMediaPreviousCommandItem){
+                //fake a hardware "previous" press
+                sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_PREVIOUS);
+                avsQueue.remove(current);
             }
-        } else if (current instanceof AvsStopItem) {
-            //stop our play
-            stopAlexaAudio();
-            stopPlaybackAudio();
-            avsQueue.remove(current);
-        } else if (current instanceof AvsReplaceAllItem) {
-            stopAlexaAudio();
-            stopPlaybackAudio();
-            avsQueue.remove(current);
-        } else if (current instanceof AvsReplaceEnqueuedItem) {
-            avsQueue.remove(current);
-        } else if (current instanceof AvsExpectSpeechItem) {
-            //listen for user input
-            stopAlexaAudio();
-            playbackAudioPlayer.pause();
-            avsQueue.remove(current);
-//            avsQueue.clear();
-            startListening();
-        } else if (current instanceof AvsSetVolumeItem) {
-            setVolume(((AvsSetVolumeItem) current).getVolume());
-            avsQueue.remove(current);
-        } else if(current instanceof AvsAdjustVolumeItem){
-            adjustVolume(((AvsAdjustVolumeItem) current).getAdjustment());
-            avsQueue.remove(current);
-        } else if(current instanceof AvsSetMuteItem){
-            setMute(((AvsSetMuteItem) current).isMute());
-            avsQueue.remove(current);
-        }else if(current instanceof AvsMediaPlayCommandItem){
-            //fake a hardware "play" press
-            sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_PLAY);
-        }else if(current instanceof AvsMediaPauseCommandItem){
-            //fake a hardware "pause" press
-            sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_PAUSE);
-        }else if(current instanceof AvsMediaNextCommandItem){
-            //fake a hardware "next" press
-            sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_NEXT);
-        }else if(current instanceof AvsMediaPreviousCommandItem){
-            //fake a hardware "previous" press
-            sendMediaButton(this, KeyEvent.KEYCODE_MEDIA_PREVIOUS);
         }
-
     }
 
     public void startListening() {
@@ -442,13 +454,16 @@ public class AlexaService extends IntentService {
         audioCue.playStopSound();
         restartRecorder();
     }
-
-    private void restartRecorder() {
+    private void stopRecorder() {
         if( recorder != null ) {
-            sendMessage("restart recorder");
+            sendMessage("stop recorder");
             recorder.stop();
             recorder.release();
         }
+    }
+    private void restartRecorder() {
+        stopRecorder();
+        sendMessage("start recorder");
         recorder = new RawAudioRecorder(AUDIO_RATE);
         recorder.start();
     }
@@ -600,6 +615,7 @@ public class AlexaService extends IntentService {
         stopForeground(true);
         snowboyDetect.delete();
         instance = null;
+        working = false;
         super.onDestroy();
         Intent intent = new Intent("me.sagan.r1helper.start");
         sendBroadcast(intent);
@@ -632,13 +648,24 @@ public class AlexaService extends IntentService {
         listening = false;
         playing = false;
         enteredIdle = true;
-        snowboyDetect.reset();
-        recorder.start();
         while( true ) {
             long t = System.currentTimeMillis();
             if( t - lastTrimCacheTime > 1800000 ) {
                 AlexaAudioPlayer.trimCache(this);
                 lastTrimCacheTime = t;
+            }
+            if( App.mode != 0 ) {
+                if( working ) {
+                    stopListening();
+                    stopRecorder();
+                    working = false;
+                }
+                SystemClock.sleep(1000);
+                continue;
+            } else if( !working ) {
+                snowboyDetect.reset();
+                restartRecorder();
+                working = true;
             }
             try {
                 int result = 0;

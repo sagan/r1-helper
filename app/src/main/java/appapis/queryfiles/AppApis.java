@@ -47,7 +47,7 @@ public class AppApis {
                 "* GET /log : 返回 app 运行日志。\n" +
                 "* GET /set?lang=ja-JP : 更改设备设定。可选参数：\n" +
                 "    * lang : 设置 Alexa 语音助手使用的语言。可选的 lang 语言值包括：de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-CA, fr-FR, it-IT, ja-JP。\n" +
-                "    * mode : 更改 app 运行模式。mode 值：0 - 正常模式(显示 LED 灯和氛围灯效果); 1 - 关闭 LED 灯; 2 - 蓝牙配对模式 (LED灯交替闪烁蓝、白色)。\n" +
+                "    * mode : 更改 app 运行模式。mode 值：0 - 正常模式(显示 LED 灯和氛围灯效果); 1 - 关闭语音助手和 LED ; 2 - 蓝牙配对模式 (LED灯交替闪烁蓝、白色)。\n" +
                 "* GET /config?sensitivity=0.3 : 获取或修改 app (持久化)首选项参数。可选参数：\n" +
                 "    * sensitivity : 语音助手唤醒词识别敏感度。范围 [0,1]。数值越大则越容易唤醒，但误唤醒率也会更高。\n" +
                 "    * recordPausing : 毫秒数。> 0 则启用录音时本地语音结束检测（录音至少需已开始这么长时间才可能结束）。不推荐。Alexa服务器云端会自动检测语音结束。\n" +

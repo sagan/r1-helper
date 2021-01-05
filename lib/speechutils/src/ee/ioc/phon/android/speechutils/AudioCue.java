@@ -51,7 +51,7 @@ public class AudioCue {
         final MediaPlayer mp = MediaPlayer.create(mContext, sound);
         // create can return null, e.g. on Android Wear
         if (mp == null) {
-//            sendMessage("audio cue fail create player " + sound);
+            sendMessage("audio cue fail create player " + sound);
             return false;
         }
         // no effect?, MediaPlayer.create return a mp with prepare() called, which will ignore setAudioStreamType
@@ -59,21 +59,21 @@ public class AudioCue {
         mp.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
             @Override
             public void onCompletion(MediaPlayer mp) {
-//                sendMessage("audio cue play complete " + sound);
+                sendMessage("audio cue play complete " + sound);
                 mp.release();
             }
         });
         mp.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-//                sendMessage("audio cue play error " + sound + ", " + what + " " + extra);
+                sendMessage("audio cue play error " + sound + ", " + what + " " + extra);
                 return false;
             }
         });
         mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
             @Override
             public void onPrepared(MediaPlayer mp) {
-//                sendMessage("audio cue start play " + sound);
+                sendMessage("audio cue start play " + sound);
                 mp.start();
             }
         });
