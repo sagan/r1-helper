@@ -7,6 +7,8 @@ import android.content.SharedPreferences;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioRecord;
+import android.os.Handler;
+import android.os.Looper;
 import android.os.SystemClock;
 import android.os.health.SystemHealthManager;
 import android.preference.PreferenceManager;
@@ -72,6 +74,7 @@ public class AlexaService extends IntentService {
     public long listeningStartTime = 0;
     public static boolean playing = false;
 
+    private Handler runnableHandler;
     private static SnowboyDetect snowboyDetect;
     private static final int AUDIO_RATE = 16000;
     private RawAudioRecorder recorder;
@@ -436,13 +439,18 @@ public class AlexaService extends IntentService {
     public void startListening() {
         sendMessage("Alexa start listening");
         listening = true;
-        Tool.setLight(0xFFFFFF);
-        audioCue.playStartSoundAndSleep();
-        recorder.consumeRecordingAndTruncate();
-        listeningStartTime = System.currentTimeMillis();
-        stopAlexaAudio();
-        playbackAudioPlayer.pause();
-        alexaManager.sendAudioRequest(requestBody, requestCallback);
+        runnableHandler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                Tool.setLight(0xFFFFFF);
+                audioCue.playStartSoundAndSleep();
+                recorder.consumeRecordingAndTruncate();
+                listeningStartTime = System.currentTimeMillis();
+                stopAlexaAudio();
+                playbackAudioPlayer.pause();
+                alexaManager.sendAudioRequest(requestBody, requestCallback);
+            }
+        }, 1);
     }
 
     //tear down our recorder
@@ -556,6 +564,7 @@ public class AlexaService extends IntentService {
     @Override
     public void onCreate() {
         super.onCreate();
+        runnableHandler = new Handler(Looper.getMainLooper());
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         //get our AlexaManager instance for convenience
         recorder = new RawAudioRecorder(AUDIO_RATE);

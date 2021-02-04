@@ -77,6 +77,7 @@ public class AudioCue {
                 mp.start();
             }
         });
+        sendMessage("audio cue play " + sound);
         return true;
     }
 

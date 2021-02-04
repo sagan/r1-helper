@@ -59,7 +59,7 @@ public class DownChannelService extends Service {
     public void onCreate() {
         super.onCreate();
 
-        Log.i(TAG, "Launched");
+        Log.i(TAG, "onCreate");
         alexaManager = AlexaManager.getInstance(this);
         handler = AndroidSystemHandler.getInstance(this);
 
@@ -100,11 +100,14 @@ public class DownChannelService extends Service {
                 });
             }
         };
-        
-        openDownChannel();
-
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Log.i(TAG, "onStartCommand");
+        openDownChannel();
+        return START_STICKY;
+    }
 
     @Override
     public void onDestroy() {
@@ -115,6 +118,7 @@ public class DownChannelService extends Service {
             currentCall.cancel();
         }
         runnableHandler.removeCallbacks(pingRunnable);
+//        startService(new Intent(this, DownChannelService.class));
     }
 
 
