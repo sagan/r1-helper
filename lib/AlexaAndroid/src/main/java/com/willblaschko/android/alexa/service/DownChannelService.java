@@ -116,9 +116,10 @@ public class DownChannelService extends Service {
         Log.d(TAG, "onDestroy");
         if(currentCall != null){
             currentCall.cancel();
+            currentCall = null;
         }
         runnableHandler.removeCallbacks(pingRunnable);
-//        startService(new Intent(this, DownChannelService.class));
+        startService(new Intent(this, DownChannelService.class));
     }
 
 
@@ -127,15 +128,16 @@ public class DownChannelService extends Service {
         TokenManager.getAccessToken(alexaManager.getAuthorizationManager().getAmazonAuthorizationManager(), DownChannelService.this, new TokenManager.TokenCallback() {
             @Override
             public void onSuccess(String token) {
-
                 OkHttpClient downChannelClient = ClientUtil.getTLS12OkHttpClient();
-
                 final Request request = new Request.Builder()
                         .url(alexaManager.getDirectivesUrl())
                         .get()
                         .addHeader("Authorization", "Bearer " + token)
                         .build();
-
+                if( currentCall != null) {
+                    currentCall.cancel();
+                    currentCall = null;
+                }
                 currentCall = downChannelClient.newCall(request);
                 currentCall.enqueue(new Callback() {
                     @Override

@@ -164,7 +164,7 @@ public class BackgroundService extends IntentService {
                 setBluetoothScanMode(BluetoothAdapter.SCAN_MODE_CONNECTABLE);
                 btCnt = 0;
             }
-            if( App.mode == 0 ) {
+            if( App.mode == 0 || App.mode == 3 ) {
                 if(tick % 2 == 0 && !App.playing ) {
                     Calendar now = Calendar.getInstance();
                     int seconds = now.get(Calendar.HOUR_OF_DAY) * 3600 + now.get(Calendar.MINUTE) * 60 + now.get(Calendar.SECOND);
