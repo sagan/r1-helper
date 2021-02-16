@@ -138,7 +138,7 @@ public class MainActivity extends Activity {
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if (keyCode == KEY_MAIN) {
             if(shortPress){
-                App.mode = (App.mode + 1 ) % 3;
+                App.mode = (App.mode + 1 ) % 4;
                 Log.d(TAG, "short press, switch app mode to " + App.mode);
             } else {
                 //Don't handle longpress here, because the user will have to get his finger back up first
